@@ -672,7 +672,7 @@
       <rect x="1078" y="369" width="1034" height="1564" rx="66" fill="#000" opacity="0.28"/>
       <!-- chrome body -->
       <g clip-path="url(#bodyClip)">
-        <rect x="1070" y="359" width="1034" height="1564" fill="url(#chromeV)"/>
+        <g id="chromeMove"><rect x="1070" y="219" width="1034" height="1844" fill="url(#chromeV)"/></g>
         <rect x="1070" y="359" width="1034" height="1564" fill="url(#chromeH)"/>
       </g>
       <rect x="1072" y="361" width="1030" height="1560" rx="64" fill="none" stroke="#1d1d21" stroke-width="5"/>
@@ -1752,11 +1752,11 @@
     /* chrome: on a computer the reflection follows the mouse.
        on phones it drifts slowly by itself (android also follows tilt). no permission popups. */
     (function () {
-      var g = document.getElementById('chromeV');
+      var g = document.getElementById('chromeMove');
       if (!g || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
       var touch = window.matchMedia && matchMedia('(hover: none)').matches;
       var target = 0, cur = 0, raf = 0, base = null, tilted = false, t0 = performance.now();
-      function draw() { g.setAttribute('gradientTransform', 'translate(0 ' + cur.toFixed(1) + ')'); }
+      function draw() { g.setAttribute('transform', 'translate(0 ' + cur.toFixed(1) + ')'); }
       function tick() {
         cur += (target - cur) * 0.12; draw();
         raf = Math.abs(target - cur) > 0.3 ? requestAnimationFrame(tick) : 0;
