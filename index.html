@@ -244,6 +244,111 @@
     height: 1.3cqw;
   }
 
+  /* ---------- music: spotify playlist on the "now playing" menu item ---------- */
+
+  .music {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    bottom: 26%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
+    column-gap: 1.6cqw;
+    row-gap: 1cqw;
+    padding: 1.4cqw 1.6cqw 0.6cqw;
+  }
+
+  .m-cover {
+    height: 100%;
+    aspect-ratio: 1;
+    background: #e4e4e6 center / cover no-repeat;
+    box-shadow: 0 0.2cqw 0.6cqw rgba(0,0,0,0.25);
+  }
+
+  .m-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5cqw;
+  }
+
+  .m-title {
+    font-weight: 700;
+    font-size: 1.75cqw;
+    line-height: 1.2;
+    color: #111;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .m-sub {
+    font-size: 1.4cqw;
+    line-height: 1.25;
+    color: #555;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .m-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 1.2cqw;
+  }
+
+  .m-bar span {
+    flex: none;
+    font-size: 1.4cqw;
+    color: #111;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .m-track {
+    flex: 1;
+    height: 1.6cqw;
+    max-height: 6px;
+    min-height: 3px;
+    background: #d9d9db;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .m-fill {
+    height: 100%;
+    width: 0%;
+    background: #111;
+    border-radius: 999px;
+  }
+
+  /* spotify's own player: a thin strip under the song, kept visible as spotify requires */
+  .np-player {
+    position: absolute;
+    left: 52.717%;
+    top: 42.400%;
+    width: 38.310%;
+    height: 5.800%;
+    overflow: hidden;
+    border-radius: 0.8cqw;
+    z-index: 5;
+    visibility: hidden;
+  }
+
+  .stage.in-music .np-player {
+    visibility: visible;
+  }
+
+  .np-player iframe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 0;
+    transform-origin: 0 0;
+  }
+
   /* ---------- menu screen ---------- */
 
   .screen {
@@ -777,6 +882,8 @@
       <p>anthropic &bull; AIxDESIGN &bull; berggruen institute &bull; elisava &bull; impakt &bull; joshua citarella &bull; medialab matadero &bull; new models studio &bull; nxt museum &bull; palazzo diedo &bull; parasite 2.0 &bull; takt &bull; tba21 &bull; thyssen-bornemisza national museum</p>
     </div>
 
+    <div class="np-player" id="np-player"><div id="spotify-embed"></div></div>
+
     <div class="wheel-ring" id="wheel-ring" aria-hidden="true"></div>
 
     <button type="button" class="hotspot hs-menu" data-region="menu" aria-label="Menu (back)"><span class="ripple"></span></button>
@@ -811,6 +918,7 @@
        so the data can stay exactly as in the cv.
        ===================================================================== */
 
+    var SPOTIFY_PLAYLIST = "65ziQZeUmBi9Jgen2uSiun"; /* the "now playing" menu item plays this public playlist */
     var NOW_PLAYING = "elena zaghis, speculative designer, art director, cultural consultant";
     var LOWERCASE = true;
     var IMAGE_ROOT = "images/";
@@ -1077,7 +1185,7 @@
       // ] },
       { label: "about", about: true },
       { label: "contact", contact: true },
-      { label: "now playing", nowPlaying: true }
+      { label: "now playing", music: true }
     ];
 
     var INSTAGRAM = "https://instagram.com/666ultracorpo999";
@@ -1402,8 +1510,125 @@
           } };
           if (m.about) return { label: m.label, open: aboutView };
           if (m.contact) return { label: m.label, open: contactView };
+          if (m.music) return { label: m.label, open: musicView };
           return { label: m.label, action: function () { setStack([]); } };
         });
+      }
+
+      /* ---------- music: the spotify playlist, one song at a time ---------- */
+
+      var music = null;
+
+      function musicView() {
+        if (music) return music;
+
+        var EMBED_H = 80;
+        var box = document.getElementById('np-player');
+        var slot = document.getElementById('spotify-embed');
+        var el = document.createElement('div');
+        el.className = 'music';
+        el.innerHTML =
+          '<div class="m-cover"></div>' +
+          '<div class="m-info"><div class="m-title">press play</div><div class="m-sub"></div></div>' +
+          '<div class="m-bar"><span class="m-el">0:00</span><div class="m-track"><div class="m-fill"></div></div><span class="m-rem">-0:00</span></div>';
+        var coverEl = el.querySelector('.m-cover');
+        var titleEl = el.querySelector('.m-title');
+        var subEl = el.querySelector('.m-sub');
+        var elEl = el.querySelector('.m-el');
+        var remEl = el.querySelector('.m-rem');
+        var fillEl = el.querySelector('.m-fill');
+
+        var ctrl = null, uri = null, pos = 0, dur = 0, isPaused = true, stamp = 0, started = false;
+        var playlistName = '';
+
+        function fmt(ms) {
+          var s = Math.max(0, Math.floor(ms / 1000));
+          return Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+        }
+
+        function info(url, done) {
+          fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(url))
+            .then(function (r) { return r.json(); })
+            .then(done)
+            .catch(function () {});
+        }
+
+        function showMeta(m) {
+          if (m.thumbnail_url) coverEl.style.backgroundImage = 'url("' + m.thumbnail_url + '")';
+          if (m.title) titleEl.textContent = LOWERCASE ? m.title.toLowerCase() : m.title;
+        }
+
+        info('https://open.spotify.com/playlist/' + SPOTIFY_PLAYLIST, function (m) {
+          playlistName = LOWERCASE && m.title ? m.title.toLowerCase() : (m.title || '');
+          subEl.textContent = playlistName;
+          if (!started) showMeta(m);
+          if (!started) titleEl.textContent = 'press play';
+        });
+
+        function onTrack(u) {
+          if (!u || u === uri) return;
+          uri = u;
+          var id = u.split(':').pop();
+          titleEl.textContent = '';
+          info('https://open.spotify.com/track/' + id, showMeta);
+        }
+
+        function paint() {
+          var p = pos + (isPaused ? 0 : Date.now() - stamp);
+          if (dur) p = Math.min(p, dur);
+          elEl.textContent = fmt(p);
+          remEl.textContent = '-' + fmt(dur - p);
+          fillEl.style.width = (dur ? p / dur * 100 : 0) + '%';
+          if (!isPaused) requestAnimationFrame(paint);
+        }
+
+        function fit() {
+          var f = box.querySelector('iframe');
+          if (!f || !box.clientHeight) return;
+          var k = box.clientHeight / EMBED_H;
+          f.style.width = (box.clientWidth / k) + 'px';
+          f.style.height = EMBED_H + 'px';
+          f.style.transform = 'scale(' + k + ')';
+        }
+
+        window.onSpotifyIframeApiReady = function (api) {
+          api.createController(slot, {
+            uri: 'spotify:playlist:' + SPOTIFY_PLAYLIST,
+            width: '100%',
+            height: EMBED_H
+          }, function (c) {
+            ctrl = c;
+            fit();
+            c.addListener('playback_started', function (e) { started = true; onTrack(e.data && e.data.playingURI); });
+            c.addListener('playback_update', function (e) {
+              var d = e.data || {};
+              if (d.playingURI) { started = true; onTrack(d.playingURI); }
+              var was = isPaused;
+              pos = d.position || 0; dur = d.duration || 0;
+              isPaused = !!d.isPaused || !!d.isBuffering; stamp = Date.now();
+              if (was || isPaused) paint();
+            });
+          });
+        };
+        if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+        window.addEventListener('resize', fit);
+        var sc = document.createElement('script');
+        sc.src = 'https://open.spotify.com/embed/iframe-api/v1';
+        sc.async = true;
+        document.body.appendChild(sc);
+
+        music = {
+          type: 'music',
+          title: 'now playing',
+          el: el,
+          toggle: function () { if (ctrl) ctrl.togglePlay(); },
+          skip: function (dir) {
+            if (!ctrl) return;
+            if (dir < 0 || !dur) { ctrl.restart(); return; }
+            ctrl.seek(Math.max(0, dur / 1000 - 0.3)); /* jump to the end: spotify moves on to the next song */
+          }
+        };
+        return music;
       }
 
       function aboutView() {
@@ -1436,12 +1661,13 @@
       function render() {
         var v = current();
         stage.classList.toggle('in-menu', !!v);
+        stage.classList.toggle('in-music', !!v && v.type === 'music');
         hdr.textContent = v ? v.title : 'now playing';
         if (!v) return;
         screen.replaceChildren(v.el, scrollBar);
         if (v.type === 'list') renderList(v);
         else if (v.type === 'flow') { renderFlow(v); scrollBar.classList.remove('on'); }
-        else if (v.type === 'photo') scrollBar.classList.remove('on');
+        else if (v.type === 'photo' || v.type === 'music') scrollBar.classList.remove('on');
         else updateScrollBar();
       }
 
@@ -1525,6 +1751,7 @@
 
         if (region === 'center') {
           if (!v) paused = !paused;
+          else if (v.type === 'music') v.toggle();
           else if (v.type === 'list') activate(v.items[v.sel]);
           else if (v.type === 'flow') openFromFlow(v);
           else if (v.type === 'photo') v.setAuto(!v.auto);
@@ -1535,6 +1762,7 @@
         if (region === 'play') {
           spawnHearts(buttons.play);
           if (!v) paused = !paused;
+          else if (v.type === 'music') v.toggle();
           else if (v.type === 'photo') v.setAuto(!v.auto);
           else if (v.type === 'flow') {
             var fp = v.list[v.sel];
@@ -1551,6 +1779,7 @@
         // prev / next
         var dir = region === 'next' ? 1 : -1;
         if (!v) return;
+        if (v.type === 'music') { v.skip(dir); return; }
         if (v.type === 'list' || v.type === 'flow') {
           tick(dir, 0);
         } else if (v.type === 'photo') {
