@@ -1743,34 +1743,40 @@
 
 
   <script>
-    /* chrome: the reflection slides with the mouse, and with phone tilt
-       (iphones ask for permission once, on the first tap) */
+    /* chrome: on a computer the reflection follows the mouse.
+       on phones it drifts slowly by itself (android also follows tilt). no permission popups. */
     (function () {
       var g = document.getElementById('chromeV');
       if (!g || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-      var target = 0, cur = 0, raf = 0, base = null;
+      var touch = window.matchMedia && matchMedia('(hover: none)').matches;
+      var target = 0, cur = 0, raf = 0, base = null, tilted = false, t0 = performance.now();
+      function draw() { g.setAttribute('gradientTransform', 'translate(0 ' + cur.toFixed(1) + ')'); }
       function tick() {
-        cur += (target - cur) * 0.12;
-        g.setAttribute('gradientTransform', 'translate(0 ' + cur.toFixed(1) + ')');
+        cur += (target - cur) * 0.12; draw();
         raf = Math.abs(target - cur) > 0.3 ? requestAnimationFrame(tick) : 0;
       }
       function go(v) { target = Math.max(-1, Math.min(1, v)) * 90; if (!raf) raf = requestAnimationFrame(tick); }
-      window.addEventListener('mousemove', function (e) { go((e.clientY / innerHeight - 0.5) * -2); }, { passive: true });
-      function onTilt(e) {
-        if (e.beta == null) return;
-        if (base === null) base = e.beta;          /* how you hold the phone right now = neutral */
-        go((e.beta - base) / 20);
+
+      if (!touch) {
+        window.addEventListener('mousemove', function (e) { go((e.clientY / innerHeight - 0.5) * -2); }, { passive: true });
+        return;
       }
-      function listen() { window.addEventListener('deviceorientation', onTilt, { passive: true }); }
+      /* phones: slow drift, about 9 seconds up and back */
+      function drift(now) {
+        if (tilted) return;
+        if (!document.hidden) { cur = Math.sin((now - t0) / 9000 * Math.PI * 2) * 70; draw(); }
+        requestAnimationFrame(drift);
+      }
+      requestAnimationFrame(drift);
+      /* android sends tilt without asking; iphones never do without a popup, so they keep drifting */
       var D = window.DeviceOrientationEvent;
-      if (D && typeof D.requestPermission === 'function') {
-        var asked = false;
-        document.addEventListener('touchend', function () {
-          if (asked) return; asked = true;
-          D.requestPermission().then(function (r) { if (r === 'granted') listen(); }).catch(function () {});
+      if (D && typeof D.requestPermission !== 'function') {
+        window.addEventListener('deviceorientation', function (e) {
+          if (e.beta == null) return;
+          if (base === null) base = e.beta;
+          if (!tilted && Math.abs(e.beta - base) > 2) tilted = true;
+          if (tilted) go((e.beta - base) / 20);
         }, { passive: true });
-      } else if (D) {
-        listen();
       }
     })();
   </script>
