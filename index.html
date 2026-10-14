@@ -1221,8 +1221,9 @@
       {
         title: "ama dee || sigma femme",
         year: "2026",
-        text: "",
-        link: "",
+        text: "art direction and graphic design for ama dee album release",
+        link: "https://www.instagram.com/ama__dee_newprofile/",
+        linkText: "ama dee",
         images: { dir: "amadee", pics: [1] }
       },
       {
@@ -1399,7 +1400,6 @@
       //   { label: "screenings", list: SCREENINGS, years: true }
       // ] },
       { label: "about", about: true },
-      { label: "contact", contact: true },
       { label: "now playing", music: true }
     ];
 
@@ -1604,7 +1604,7 @@
         }
         if (p.link && hasImages(p) && !p.embed) {
           var lp = el('p');
-          var a = el('a', '', hostOf(p.link) + ' \u2197');
+          var a = el('a', '', (p.linkText || hostOf(p.link)) + ' \u2197');
           a.href = p.link;
           a.target = '_blank';
           a.rel = 'noopener';
