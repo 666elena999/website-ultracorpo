@@ -1772,50 +1772,36 @@
 
 
   <script>
-    /* chrome reflection. one system for every device:
-       - it always drifts slowly by itself
-       - a mouse takes over while it moves, then hands back to the drift after 4 s
-       - android tilt takes over when the phone is tilted (iphones need a popup for that, so they just drift)
-       - people with "reduce motion" on get the same drift, slower and smaller */
+    /* chrome reflection: moves only with real motion.
+       - computer: follows the mouse
+       - phones that allow tilt without a popup (android): follows the tilt
+       - iphone: stays still (tilt there needs a permission popup)
+       no automatic movement. "reduce motion" users get half the movement. */
     (function () {
       var g = document.getElementById('chromeSheet');
       if (!g) return;
       var calm = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-      var AMP = calm ? 35 : 70, PERIOD = calm ? 16000 : 9000, FOLLOW = 90;
-      var cur = 0, target = 0, mode = 'drift', lastInput = 0, base = null, phase = 0, prev = null;
-      var now = function () { return (window.performance && performance.now) ? performance.now() : Date.now(); };
-      var frame = window.requestAnimationFrame || function (f) { return setTimeout(function () { f(now()); }, 33); };
-
-      function loop(t) {
-        if (prev === null) prev = t;
-        var dt = Math.min(100, t - prev); prev = t;
-        if (!document.hidden) {
-          if (mode !== 'drift' && t - lastInput > 4000) mode = 'drift';
-          if (mode === 'drift') {
-            phase += dt / PERIOD * Math.PI * 2;
-            target = Math.sin(phase) * AMP;
-          }
-          cur += (target - cur) * (mode === 'drift' ? 0.08 : 0.14);
-          g.style.transform = 'translate3d(0,' + (cur / 1844 * 100).toFixed(2) + '%,0)';
-        }
-        frame(loop);
+      var RANGE = calm ? 45 : 90;
+      var cur = 0, target = 0, running = false, base = null;
+      var frame = window.requestAnimationFrame || function (f) { return setTimeout(f, 33); };
+      function step() {
+        cur += (target - cur) * 0.14;
+        g.style.transform = 'translate3d(0,' + (cur / 1844 * 100).toFixed(2) + '%,0)';
+        if (Math.abs(target - cur) > 0.2) frame(step); else running = false;
       }
-      frame(loop);
-
-      function take(kind, v) {
-        mode = kind; lastInput = now();
-        target = Math.max(-1, Math.min(1, v)) * (calm ? FOLLOW / 2 : FOLLOW);
+      function go(v) {
+        target = Math.max(-1, Math.min(1, v)) * RANGE;
+        if (!running) { running = true; frame(step); }
       }
       window.addEventListener('mousemove', function (e) {
-        take('mouse', (e.clientY / (window.innerHeight || 1) - 0.5) * -2);
+        go((e.clientY / (window.innerHeight || 1) - 0.5) * -2);
       }, { passive: true });
-
       var D = window.DeviceOrientationEvent;
       if (D && typeof D.requestPermission !== 'function') {
         window.addEventListener('deviceorientation', function (e) {
           if (e.beta == null) return;
           if (base === null) base = e.beta;
-          if (Math.abs(e.beta - base) > 2 || mode === 'tilt') take('tilt', (e.beta - base) / 20);
+          go((e.beta - base) / 20);
         }, { passive: true });
       }
     })();
