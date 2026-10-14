@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+  /* dark mode: remembered per visitor */
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ultracorpo</title>
@@ -206,16 +214,18 @@
 
   /* ---------- screen title bar (covers the "Now Playing" in the picture) ---------- */
 
+  /* screen inside the bezel: x 1147 y 426 w 880 h 659 (of 2208), corner 15 */
   .hdr-title {
     position: absolute;
-    left: 52.72%;
-    top: 19.57%;
-    width: 38.45%;
-    height: 2.04%;
+    left: 51.948%;
+    top: 19.293%;
+    width: 39.855%;
+    height: 2.3%;
+    border-radius: 0.68cqw 0.68cqw 0 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 0.3cqw 0 0.2cqw;
+    padding: 0 0.75cqw 0 0.75cqw;
     background: linear-gradient(#f9f9fb 0%, #ebebed 18%, #e0e0e2 100%);
     font-weight: 700;
     font-size: 1.5cqw;
@@ -254,7 +264,7 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto auto;
     justify-items: center;
-    row-gap: 0.45cqw;
+    row-gap: 0;
     padding: 1.3cqw 1.6cqw 0.5cqw;
   }
 
@@ -300,11 +310,13 @@
   .m-artist {
     font-weight: 700;
     font-size: 1.6cqw;
+    margin-top: 1.1cqw;
   }
 
   .m-song {
     font-size: 1.45cqw;
     color: #444;
+    margin-bottom: 1.1cqw;
   }
 
   .m-bar {
@@ -312,7 +324,6 @@
     display: flex;
     align-items: center;
     gap: 1.2cqw;
-    margin-top: 0.2cqw;
   }
 
   .m-bar span {
@@ -383,10 +394,11 @@
 
   .screen {
     position: absolute;
-    left: 52.04%;
-    top: 21.74%;
-    width: 39.67%;
-    height: 27.17%;
+    left: 51.948%;
+    top: 21.593%;
+    width: 39.855%;
+    height: 27.546%;
+    border-radius: 0 0 0.68cqw 0.68cqw;
     background: #fff;
     overflow: hidden;
     z-index: 3;
@@ -788,6 +800,73 @@
     .list li.sel.long .txt { animation: none; }
   }
 
+
+  /* ---------- dark mode ---------- */
+
+  .theme-toggle {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: #c4c4c4;
+    text-underline-offset: 2px;
+  }
+
+  html[data-theme="dark"] { color-scheme: dark; }
+  html[data-theme="dark"] body { background: #000; color: #eee; }
+  html[data-theme="dark"] footer { color: #777; }
+  html[data-theme="dark"] .theme-toggle { text-decoration-color: #444; }
+  html[data-theme="dark"] .stage > img { filter: invert(1); }
+
+  /* black ipod: dark chrome with a light reflection band */
+  html[data-theme="dark"] .chrome-sheet {
+    background: linear-gradient(to bottom, #2c2c30 7.59%, #4a4a52 14.38%, #232327 41.52%, #1b1b1f 53.39%, #3c3c43 58.48%, #6a6a73 62.30%, #7a7a83 65.27%, #3a3a40 69.08%, #1e1e22 74.60%, #45454c 80.53%, #202024 86.47%, #0c0c0e 92.41%);
+  }
+  html[data-theme="dark"] .ipod-body .rim { stroke: #5a5a60; opacity: 0.6; }
+  html[data-theme="dark"] .ipod-body .wheel { fill: url(#wheelFillDark); stroke: #3a3a3f; }
+  html[data-theme="dark"] .ipod-body .btn { fill: url(#btnFillDark); stroke: #0a0a0c; }
+  html[data-theme="dark"] .ipod-body .btn-ring { stroke: #55555b; opacity: 0.5; }
+  html[data-theme="dark"] .ipod-body .lbl { fill: #d8d8dc; }
+  html[data-theme="dark"] .ipod-body .lcd { fill: #0f0f11; }
+
+  /* screen */
+  html[data-theme="dark"] .hdr-title { background: linear-gradient(#3b3b40 0%, #2c2c30 18%, #222226 100%); color: #eee; }
+  html[data-theme="dark"] .hdr-icons svg { filter: invert(1); }
+  html[data-theme="dark"] .screen { background: #0f0f11; }
+  html[data-theme="dark"] .marquee-track span,
+  html[data-theme="dark"] .time-label,
+  html[data-theme="dark"] .m-line,
+  html[data-theme="dark"] .m-bar span,
+  html[data-theme="dark"] .list li,
+  html[data-theme="dark"] .text-view .p-title,
+  html[data-theme="dark"] .text-view .p-sub,
+  html[data-theme="dark"] .text-view .p-play,
+  html[data-theme="dark"] .text-view li::before { color: #eee; }
+  html[data-theme="dark"] .caption-box,
+  html[data-theme="dark"] .text-view { color: #bdbdc2; }
+  html[data-theme="dark"] .m-song { color: #a9a9ae; }
+  html[data-theme="dark"] .caption-box a,
+  html[data-theme="dark"] .text-view a { color: #eee; text-decoration-color: #66666b; }
+  html[data-theme="dark"] .caption-box a:hover,
+  html[data-theme="dark"] .text-view a:hover { text-decoration-color: #eee; }
+  html[data-theme="dark"] .progress-track,
+  html[data-theme="dark"] .m-track { background: #333337; }
+  html[data-theme="dark"] .progress-fill,
+  html[data-theme="dark"] .m-fill { background: #eee; }
+  html[data-theme="dark"] .m-bar.scrub .m-track { background: #55555a; }
+  html[data-theme="dark"] .m-bar.scrub .m-fill { background: transparent; }
+  html[data-theme="dark"] .m-bar.scrub .m-fill::after { background: #eee; }
+  html[data-theme="dark"] .m-cover { background-color: #222226; }
+  html[data-theme="dark"] .list li.sel { background: #eee; color: #111; }
+  html[data-theme="dark"] .list li .yr { color: #77777c; }
+  html[data-theme="dark"] .list li.sel .yr { color: #55555a; }
+  html[data-theme="dark"] .screen-scroll { background: #333337; }
+  html[data-theme="dark"] .screen-thumb { background: #eee; }
+  html[data-theme="dark"] .text-view .embed { background: #1a1a1d; }
+  html[data-theme="dark"] .text-view .thumbs img { background: #222226; }
 </style>
 </head>
 <body>
@@ -830,27 +909,37 @@
           <stop offset="0.97" stop-color="#f2f2f4"/>
           <stop offset="1" stop-color="#d4d4d8"/>
         </radialGradient>
+        <radialGradient id="wheelFillDark" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0.8" stop-color="#2b2b2f"/>
+          <stop offset="0.97" stop-color="#232327"/>
+          <stop offset="1" stop-color="#151518"/>
+        </radialGradient>
+        <radialGradient id="btnFillDark" cx="0.42" cy="0.36" r="0.75">
+          <stop offset="0" stop-color="#4a4a50"/>
+          <stop offset="0.55" stop-color="#2c2c31"/>
+          <stop offset="0.85" stop-color="#1d1d21"/>
+          <stop offset="1" stop-color="#0e0e10"/>
+        </radialGradient>
         <clipPath id="bodyClip"><rect x="1070" y="359" width="1034" height="1564" rx="66"/></clipPath>
       </defs>
 
       <rect x="1072" y="361" width="1030" height="1560" rx="64" fill="none" stroke="#1d1d21" stroke-width="5"/>
-      <rect x="1079" y="368" width="1016" height="1546" rx="58" fill="none" stroke="#fff" stroke-width="3" opacity="0.9"/>
+      <rect class="rim" x="1079" y="368" width="1016" height="1546" rx="58" fill="none" stroke="#fff" stroke-width="3" opacity="0.9"/>
 
-      <!-- glass rim + screen frame -->
-      <rect x="1114" y="393" width="946" height="726" rx="40" fill="#fff" opacity="0.92"/>
-      <rect x="1137" y="416" width="900" height="679" rx="26" fill="#0d0d0f"/>
-      <rect x="1149" y="429" width="876" height="652" rx="14" fill="#fff"/>
+      <!-- screen frame: thick black bezel, like the real one -->
+      <rect class="bezel" x="1129" y="408" width="916" height="695" rx="34" fill="#0d0d0f"/>
+      <rect class="lcd" x="1147" y="426" width="880" height="659" rx="15" fill="#fff"/>
 
       <!-- click wheel -->
       <circle cx="1588" cy="1503" r="303" fill="#000" opacity="0.12"/>
-      <circle cx="1588" cy="1503" r="301" fill="url(#wheelFill)" stroke="#bcbcc1" stroke-width="3"/>
+      <circle class="wheel" cx="1588" cy="1503" r="301" fill="url(#wheelFill)" stroke="#bcbcc1" stroke-width="3"/>
       <circle cx="1588" cy="1503" r="131" fill="#000" opacity="0.18"/>
-      <circle cx="1588" cy="1503" r="129" fill="url(#btnFill)" stroke="#7d7d83" stroke-width="3"/>
-      <circle cx="1588" cy="1503" r="120" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/>
+      <circle class="btn" cx="1588" cy="1503" r="129" fill="url(#btnFill)" stroke="#7d7d83" stroke-width="3"/>
+      <circle class="btn-ring" cx="1588" cy="1503" r="120" fill="none" stroke="#fff" stroke-width="3" opacity="0.7"/>
 
       <!-- labels -->
-      <text x="1588" y="1300" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="50" letter-spacing="1" fill="#111">MENU</text>
-      <g fill="#111">
+      <text x="1588" y="1300" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="50" letter-spacing="1" fill="#111" class="lbl">MENU</text>
+      <g fill="#111" class="lbl">
         <rect x="1352" y="1486" width="7" height="36"/>
         <path d="M1359 1504 l30 -18 v36z M1386 1504 l30 -18 v36z"/>
         <path d="M1817 1504 l-30 -18 v36z M1790 1504 l-30 -18 v36z"/>
@@ -862,7 +951,7 @@
     </svg>
 
     <div class="hdr-title" aria-hidden="false">
-      <span id="hdr-text" aria-live="polite">now playing</span>
+      <span id="hdr-text" aria-live="polite">elena zaghis</span>
       <span class="hdr-icons" aria-hidden="true">
         <svg viewBox="0 0 10 12"><path d="M2.6 5V3.6a2.4 2.4 0 0 1 4.8 0V5" fill="none" stroke="#111" stroke-width="1.5"/><rect x="1" y="5" width="8" height="6.4" rx="1" fill="#111"/></svg>
         <svg viewBox="0 0 10 12"><path d="M1.5 1.2 9 6l-7.5 4.8z" fill="#111"/></svg>
@@ -923,7 +1012,7 @@
     <button type="button" class="hotspot hs-center" data-region="center" aria-label="Select"><span class="ripple"></span></button>
   </div>
 
-  <footer>&copy; <span id="year"></span> ultracorpo</footer>
+  <footer>&copy; <span id="year"></span> ultracorpo &middot; <button type="button" class="theme-toggle" id="theme-toggle">dark mode</button></footer>
 
   <script>
     /* =====================================================================
@@ -949,7 +1038,7 @@
        ===================================================================== */
 
     var SPOTIFY_PLAYLIST = "65ziQZeUmBi9Jgen2uSiun"; /* the "now playing" menu item plays this public playlist */
-    var NOW_PLAYING = "elena zaghis, speculative designer, art director, cultural consultant";
+    var NOW_PLAYING = "speculative designer, art director, cultural consultant";
     var LOWERCASE = true;
     var IMAGE_ROOT = "images/";
     var SLIDE_SECONDS = 3;
@@ -1024,7 +1113,7 @@
         title: "takt",
         year: "2026–ongoing",
         role: "art direction, marketing & content design across social, live content, and print",
-        text: "takt is one of europe’s leading underground event and community platforms, operating at the intersection of experimental pop, nightlife, and subculture. takt has previously hosted private afterparties for 2hollis, the hellp, ca7riel & paco amoroso, robyn, young miko, ninajirachi and cannelle. it has also curated guestlists for charli xcx’s private afterparty and the official 1199 paris fashion week afterparty with pz, young eman & welcome.jpeg.\n\nits strength lies in a deeply embedded cultural network of highly credible tastemakers across central europe. this allows takt to create moments with strong organic reach and genuine cultural relevance, positioning artists authentically within one of the world’s most influential creative ecosystems.\n\nWorks [selected]\n- Communication for The Moment afterparty (Berlinale) with Charli XCX\n- Communication + live content and interviews for takt x Bleach Berlin hosted by Dorian Electra, flyer design by tomphix, photo by Luca Piscopo\n- Communication for takt manifesto",
+        text: "takt is one of europe’s leading underground event and community platforms, operating at the intersection of experimental pop, nightlife, and subculture. takt has previously hosted private afterparties for 2hollis, the hellp, ca7riel & paco amoroso, robyn, young miko, ninajirachi and cannelle. it has also curated guestlists for charli xcx’s private afterparty and the official 1199 paris fashion week afterparty with pz, young eman & welcome.jpeg.\n\nits strength lies in a deeply embedded cultural network of highly credible tastemakers across central europe. this allows takt to create moments with strong organic reach and genuine cultural relevance, positioning artists authentically within one of the world’s most influential creative ecosystems.\n\nWorks [selected]\n- Communication for The Moment afterparty (Berlinale) with Charli XCX\n- Communication + live content and interviews for takt x Bleach Berlin hosted by Dorian Electra, photo by Luca Piscopo\n- Interview format previously featuring christ dillinger, miss bashful, 8485, and more",
         link: "https://www.instagram.com/jointakt/",
         embed: [
           "https://www.instagram.com/p/DYxEqO0iBYV/embed",
@@ -1054,6 +1143,7 @@
       {
         title: "The Online Marketplace of Ideas",
         year: "2026",
+        where: ["Palazzo Diedo, Venice"],
         role: "production & sourcing, 400+ items, install management",
         collaborators: "Joshua Citarella, New Models (Caroline Busta & Lil Internet)",
         text: "The Online Marketplace of Ideas (2026) is an expansive survey of present and recent Internet culture. Today, alt-media has become quantitatively larger than legacy publications. As a result, any consensus or “mainstream” has fragmented into a chaotic digital landscape. The cultural and political fringe is now co-mingled with the establishment. Challengers have become incumbents and vice versa.\n\nI produced the installation for Joshua Citarella & New Models (Caroline Busta & Lil Internet) with spatial design by sub‘s Bill Bellingham & Giulia Domeniconi led by Christopher Blohm and Niklas Bildstein Zaar, The Online Marketplace of Ideas brings traces of the web 2 protocol into the physical world.",
@@ -1200,7 +1290,7 @@
     // the main menu, top to bottom. "list" = a playlist, "items" = a folder of playlists
     var MENU = [
       { label: "art", list: ART, flow: true },
-      { label: "client work", list: CLIENT_WORK, flow: true },
+      { label: "commissions", list: CLIENT_WORK, flow: true },
       { label: "exhibitions", list: EXHIBITIONS, years: true },
       { label: "talks", list: TALKS, years: true },
       { label: "writing", list: WRITING, years: true },
@@ -1223,6 +1313,19 @@
     /* ===================================================================== */
 
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    (function () {
+      var btn = document.getElementById('theme-toggle');
+      var root = document.documentElement;
+      function label() { btn.textContent = root.getAttribute('data-theme') === 'dark' ? 'light mode' : 'dark mode'; }
+      label();
+      btn.addEventListener('click', function () {
+        var dark = root.getAttribute('data-theme') !== 'dark';
+        if (dark) root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+        label();
+      });
+    })();
 
     var EMAIL = 'elena' + '@' + 'ultra-corpo.com';
     document.querySelectorAll('.email-link').forEach(function (a) {
@@ -1547,7 +1650,7 @@
 
       /* ---------- music: the spotify playlist, one song at a time ---------- */
 
-      var music = null;
+      var music = null, wasMusic = false;
 
       function musicView() {
         if (music) return music;
@@ -1638,7 +1741,7 @@
         setLine(songLine, '');
         info('https://open.spotify.com/playlist/' + SPOTIFY_PLAYLIST, function (m) {
           playlistName = m.title || '';
-          if (!started) { showCover(m); setLine(songLine, playlistName); }
+          if (!started && !queue.length) { showCover(m); setLine(songLine, playlistName); }
         });
 
         function onTrack(u) {
@@ -1676,12 +1779,38 @@
           return a;
         }
 
-        /* play queue[i]; wraps around, and reshuffles after the last song */
+        /* the shuffled order is kept per visitor, so every song plays once
+           before any song comes back, also across visits */
+        var QKEY = 'np-order-' + SPOTIFY_PLAYLIST;
+        function saveOrder() {
+          try { localStorage.setItem(QKEY, JSON.stringify({ order: queue, at: qi })); } catch (e) {}
+        }
+        function buildQueue(all) {
+          var saved = null;
+          try { saved = JSON.parse(localStorage.getItem(QKEY) || 'null'); } catch (e) {}
+          if (!saved || !saved.order) { queue = shuffle(all.slice()); qi = 0; return; }
+          var have = {}; all.forEach(function (u) { have[u] = 1; });
+          var done = saved.order.slice(0, (saved.at || 0) + 1).filter(function (u) { return have[u]; });
+          var seen = {}; done.forEach(function (u) { seen[u] = 1; });
+          var left = shuffle(all.filter(function (u) { return !seen[u]; }));
+          if (!left.length) { queue = reshuffled(all, done[done.length - 1]); qi = 0; return; }
+          queue = done.concat(left);
+          qi = done.length; /* continue with the first song not heard yet */
+        }
+        /* a fresh round, never starting with the song that just played */
+        function reshuffled(all, last) {
+          var q = shuffle(all.slice());
+          if (q.length > 1 && q[0] === last) { var t = q[0]; q[0] = q[q.length - 1]; q[q.length - 1] = t; }
+          return q;
+        }
+
+        /* play queue[i]; after the last song a new round starts */
         function playAt(i) {
           if (!ctrl || !queue.length) return;
-          if (i >= queue.length) { shuffle(queue); i = 0; }
-          if (i < 0) i = queue.length - 1;
+          if (i >= queue.length) { queue = reshuffled(queue, queue[queue.length - 1]); i = 0; }
+          if (i < 0) i = 0;
           qi = i;
+          saveOrder();
           nearEnd = false; advancing = false;
           pos = 0; dur = 0; stamp = Date.now();
           onTrack(queue[qi]);
@@ -1721,7 +1850,7 @@
             api.createController(slot, { uri: first, width: '100%', height: EMBED_H }, function (c) {
               ctrl = c;
               fit();
-              if (queue.length) onTrack(queue[0]);
+              if (queue.length) onTrack(queue[qi]);
               c.addListener('playback_started', function (e) { started = true; onTrack(e.data && e.data.playingURI); });
               c.addListener('playback_update', function (e) {
                 var d = e.data || {};
@@ -1754,8 +1883,8 @@
           .then(function (r) { return r.json(); })
           .then(function (d) {
             names = (d && d.tracks) || {};
-            queue = shuffle(Object.keys(names));
-            start(queue.length ? queue[0] : 'spotify:playlist:' + SPOTIFY_PLAYLIST);
+            buildQueue(Object.keys(names));
+            start(queue.length ? queue[qi] : 'spotify:playlist:' + SPOTIFY_PLAYLIST);
           })
           .catch(function () { start('spotify:playlist:' + SPOTIFY_PLAYLIST); });
 
@@ -1764,6 +1893,12 @@
           title: 'now playing',
           el: el,
           ready: function () { return !!ctrl; },
+          /* leaving the screen stops the music */
+          stop: function () {
+            if (!ctrl) return;
+            try { ctrl.pause(); } catch (e) {}
+            isPaused = true; pos = now(); stamp = Date.now(); repaint();
+          },
           /* play/pause button */
           toggle: function () {
             if (!ctrl) return;
@@ -1818,7 +1953,7 @@
       }
 
       function rootView() {
-        if (!cache.root) cache.root = listView('ultracorpo', menuItems(MENU, ''));
+        if (!cache.root) cache.root = listView('menu', menuItems(MENU, ''));
         return cache.root;
       }
 
@@ -1832,8 +1967,11 @@
       function render() {
         var v = current();
         stage.classList.toggle('in-menu', !!v);
-        stage.classList.toggle('in-music', !!v && v.type === 'music');
-        hdr.textContent = v ? v.title : 'now playing';
+        var isMusic = !!v && v.type === 'music';
+        if (wasMusic && !isMusic && music) music.stop();
+        wasMusic = isMusic;
+        stage.classList.toggle('in-music', isMusic);
+        hdr.textContent = v ? v.title : 'elena zaghis';
         if (!v) return;
         screen.replaceChildren(v.el, scrollBar);
         if (v.type === 'list') renderList(v);
@@ -1934,7 +2072,6 @@
         if (region === 'play') {
           spawnHearts(buttons.play);
           if (v && v.type === 'music') v.toggle();
-          else if ((!v || v.type === 'list') && music && music.ready()) music.toggle();
           else if (!v) paused = !paused;
           else if (v.type === 'photo') v.setAuto(!v.auto);
           else if (v.type === 'flow') {
