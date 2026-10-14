@@ -30,7 +30,12 @@
     padding: 30px 10px;
   }
 
+  html, body {
+    overscroll-behavior: none;
+  }
+
   .stage {
+    touch-action: none; /* touching the ipod never drags or zooms the page; lists and texts on the screen still scroll */
     position: relative;
     width: min(96vw, calc(100vh - 60px), 1150px);
     width: min(96vw, calc(100svh - 60px), 1150px);
@@ -238,6 +243,7 @@
     list-style: none;
     height: 100%;
     overflow-y: auto;
+    touch-action: pan-y;
     scrollbar-width: none;
     -ms-overflow-style: none;
     overscroll-behavior: contain;
