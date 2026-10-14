@@ -251,11 +251,11 @@
     left: 0; right: 0; top: 0;
     bottom: 14.5%;
     display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: minmax(0, 1fr) auto;
-    column-gap: 1.6cqw;
-    row-gap: 1cqw;
-    padding: 1.4cqw 1.6cqw 0.6cqw;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto auto;
+    justify-items: center;
+    row-gap: 0.45cqw;
+    padding: 1.3cqw 1.6cqw 0.5cqw;
   }
 
   .m-cover {
@@ -265,44 +265,59 @@
     box-shadow: 0 0.2cqw 0.6cqw rgba(0,0,0,0.25);
   }
 
-  .m-info {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.5cqw;
-  }
-
-  .m-title {
-    font-weight: 700;
-    font-size: 1.75cqw;
-    line-height: 1.2;
-    color: #111;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+  /* one line of text; scrolls like the name on the home screen when it doesn't fit */
+  .m-line {
+    width: 100%;
     overflow: hidden;
-  }
-
-  .m-sub {
-    font-size: 1.4cqw;
-    line-height: 1.25;
-    color: #555;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    color: #111;
+  }
+
+  .m-line .m-run {
+    display: flex;
+    width: max-content;
+    margin: 0 auto;
+    will-change: transform;
+  }
+
+  .m-line.rolling .m-run {
+    margin: 0;
+  }
+
+  .m-line .m-run span + span {
+    display: none;
+  }
+
+  .m-line.rolling .m-run span {
+    padding-right: 6.071cqw;
+  }
+
+  .m-line.rolling .m-run span + span {
+    display: inline;
+  }
+
+  .m-artist {
+    font-weight: 700;
+    font-size: 1.6cqw;
+  }
+
+  .m-song {
+    font-size: 1.45cqw;
+    color: #444;
   }
 
   .m-bar {
-    grid-column: 1 / -1;
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 1.2cqw;
+    margin-top: 0.2cqw;
   }
 
   .m-bar span {
     flex: none;
-    font-size: 1.4cqw;
+    font-size: 1.35cqw;
     color: #111;
     font-variant-numeric: tabular-nums;
   }
@@ -1529,11 +1544,58 @@
         el.className = 'music';
         el.innerHTML =
           '<div class="m-cover"></div>' +
-          '<div class="m-info"><div class="m-title">press play</div><div class="m-sub"></div></div>' +
+          '<div class="m-line m-artist"><div class="m-run"><span></span><span></span></div></div>' +
+          '<div class="m-line m-song"><div class="m-run"><span></span><span></span></div></div>' +
           '<div class="m-bar"><span class="m-el">0:00</span><div class="m-track"><div class="m-fill"></div></div><span class="m-rem">-0:00</span></div>';
         var coverEl = el.querySelector('.m-cover');
-        var titleEl = el.querySelector('.m-title');
-        var subEl = el.querySelector('.m-sub');
+        var lines = [el.querySelector('.m-artist'), el.querySelector('.m-song')].map(function (box) {
+          return { box: box, run: box.querySelector('.m-run'), spans: box.querySelectorAll('span'), pos: 0, w: 0 };
+        });
+        var artistLine = lines[0], songLine = lines[1];
+        var names = {};
+        fetch('tracks.json', { cache: 'no-cache' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { names = (d && d.tracks) || {}; if (uri) setTrackText(); })
+          .catch(function () {});
+
+        function setLine(L, text) {
+          text = LOWERCASE ? String(text || '').toLowerCase() : String(text || '');
+          L.spans[0].textContent = text;
+          L.spans[1].textContent = text;
+          L.pos = 0;
+          L.box.classList.remove('rolling');
+          L.run.style.transform = '';
+          requestAnimationFrame(function () {
+            if (L.spans[0].offsetWidth > L.box.clientWidth + 1) {
+              L.box.classList.add('rolling');
+              L.w = L.spans[0].offsetWidth;
+            } else L.w = 0;
+          });
+        }
+
+        /* same speed as the scrolling name on the home screen */
+        var lastRoll = null;
+        function roll(t) {
+          var dt = lastRoll === null ? 0 : Math.min(0.1, (t - lastRoll) / 1000);
+          lastRoll = t;
+          if (stage.classList.contains('in-music')) {
+            lines.forEach(function (L) {
+              if (!L.w) return;
+              L.pos -= NORMAL_SPEED * dt;
+              while (L.pos <= -L.w) L.pos += L.w;
+              L.run.style.transform = 'translateX(' + L.pos + 'px)';
+            });
+          }
+          requestAnimationFrame(roll);
+        }
+        requestAnimationFrame(roll);
+        var trackTitle = '';
+
+        function setTrackText() {
+          var n = names[uri];
+          setLine(artistLine, n && n.artist ? n.artist : '');
+          setLine(songLine, (n && n.title) || trackTitle);
+        }
         var elEl = el.querySelector('.m-el');
         var remEl = el.querySelector('.m-rem');
         var fillEl = el.querySelector('.m-fill');
@@ -1553,24 +1615,28 @@
             .catch(function () {});
         }
 
-        function showMeta(m) {
+        function showCover(m) {
           if (m.thumbnail_url) coverEl.style.backgroundImage = 'url("' + m.thumbnail_url + '")';
-          if (m.title) titleEl.textContent = LOWERCASE ? m.title.toLowerCase() : m.title;
         }
 
+        setLine(artistLine, 'press play');
+        setLine(songLine, '');
         info('https://open.spotify.com/playlist/' + SPOTIFY_PLAYLIST, function (m) {
-          playlistName = LOWERCASE && m.title ? m.title.toLowerCase() : (m.title || '');
-          subEl.textContent = playlistName;
-          if (!started) showMeta(m);
-          if (!started) titleEl.textContent = 'press play';
+          playlistName = m.title || '';
+          if (!started) { showCover(m); setLine(songLine, playlistName); }
         });
 
         function onTrack(u) {
           if (!u || u === uri) return;
           uri = u;
-          var id = u.split(':').pop();
-          titleEl.textContent = '';
-          info('https://open.spotify.com/track/' + id, showMeta);
+          trackTitle = '';
+          setTrackText();
+          info('https://open.spotify.com/track/' + u.split(':').pop(), function (m) {
+            if (u !== uri) return;
+            showCover(m);
+            trackTitle = m.title || '';
+            if (!(names[uri] && names[uri].title)) setLine(songLine, trackTitle);
+          });
         }
 
         function paint() {
