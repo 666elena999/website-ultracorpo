@@ -115,7 +115,7 @@
   .marquee-box {
     position: absolute;
     left: 52.717%;
-    top: 24.000%;
+    top: 27.174%;
     width: 38.859%;
     height: 3.261%;
     overflow: hidden;
@@ -137,36 +137,48 @@
     padding-right: 6.071cqw;
   }
 
-
-
-
-
-  /* spotify player (compact embed, scaled to fit the screen) */
-  .np-player {
+  .progress-row {
     position: absolute;
     left: 52.717%;
-    top: 28.600%;
-    width: 38.859%;
-    height: 9.000%;
-    overflow: hidden;
-    border-radius: 0.9cqw;
-    background: #e9e9eb;
+    top: 44.293%;
+    width: 38.310%;
+    height: 4.348%;
+    display: flex;
+    align-items: center;
+    gap: 1.2cqw;
   }
 
-  .np-player iframe {
-    position: absolute;
-    left: 0;
-    top: 0;
-    border: 0;
-    transform-origin: 0 0;
+  .time-label {
+    flex: none;
+    font-size: 1.55cqw;
+    font-weight: 400;
+    color: #111;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 2.2cqw;
+    max-height: 6px;
+    min-height: 3px;
+    background: #d9d9db;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #111;
+    border-radius: 999px;
   }
 
   .caption-box {
     position: absolute;
     left: 52.717%;
-    top: 39.000%;
+    top: 33.690%;
     width: 38.859%;
-    height: 7.400%;
+    height: 8.300%;
     overflow: hidden;
     font-size: 1.6cqw;
     line-height: 1.35;
@@ -251,8 +263,8 @@
   }
 
   .stage.in-menu .marquee-box,
-  .stage.in-menu .np-player,
-  .stage.in-menu .caption-box {
+  .stage.in-menu .caption-box,
+  .stage.in-menu .progress-row {
     visibility: hidden;
   }
 
@@ -730,8 +742,6 @@
       </div>
     </div>
 
-    <div class="np-player" id="np-player"><div id="spotify-embed"></div></div>
-
     <div class="caption-box">
       you can find me at
       <span class="keep-together">
@@ -742,6 +752,11 @@
       or just go and touch grass &lt;3
     </div>
 
+    <div class="progress-row">
+      <span class="time-label time-elapsed">0:00</span>
+      <div class="progress-track"><div class="progress-fill"></div></div>
+      <span class="time-label time-remaining">-3:00</span>
+    </div>
 
     <div class="screen" id="screen" role="region" aria-label="menu">
       <div class="screen-scroll" aria-hidden="true"><div class="screen-thumb"></div></div>
@@ -1509,7 +1524,7 @@
         }
 
         if (region === 'center') {
-          if (!v) { if (!spotifyToggle()) paused = !paused; }
+          if (!v) paused = !paused;
           else if (v.type === 'list') activate(v.items[v.sel]);
           else if (v.type === 'flow') openFromFlow(v);
           else if (v.type === 'photo') v.setAuto(!v.auto);
@@ -1519,7 +1534,7 @@
 
         if (region === 'play') {
           spawnHearts(buttons.play);
-          if (!v) { if (!spotifyToggle()) paused = !paused; }
+          if (!v) paused = !paused;
           else if (v.type === 'photo') v.setAuto(!v.auto);
           else if (v.type === 'flow') {
             var fp = v.list[v.sel];
@@ -1729,61 +1744,32 @@
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
-    })();
-  </script>
 
+      /* ---------- progress bar: real time on the page, looping like a track ---------- */
 
-  <script>
-    /* =====================================================================
-       now playing: spotify playlist.
-       change the playlist by pasting its id here (the part after /playlist/).
-       the playlist must be public. songs added in spotify show up on their own.
-       ===================================================================== */
-    var SPOTIFY_PLAYLIST = "65ziQZeUmBi9Jgen2uSiun";
+      var TRACK_LEN = 180;
+      var pageStart = Date.now();
+      var elapsedEl = document.querySelector('.time-elapsed');
+      var remainingEl = document.querySelector('.time-remaining');
+      var fillEl = document.querySelector('.progress-fill');
 
-    var spotify = null;
-    function spotifyToggle() {
-      if (!spotify) return false;
-      try { spotify.togglePlay(); } catch (e) { return false; }
-      return true;
-    }
-
-    (function () {
-      var box = document.getElementById('np-player');
-      var slot = document.getElementById('spotify-embed');
-      if (!box || !slot) return;
-      var EMBED_H = 80; /* spotify's compact player height */
-
-      function fit() {
-        var f = box.querySelector('iframe');
-        if (!f) return;
-        var w = box.clientWidth, h = box.clientHeight;
-        if (!w || !h) return;
-        var k = h / EMBED_H;
-        f.style.width = (w / k) + 'px';
-        f.style.height = EMBED_H + 'px';
-        f.style.transform = 'scale(' + k + ')';
+      function formatTime(s) {
+        s = Math.max(0, Math.floor(s));
+        var m = Math.floor(s / 60), sec = s % 60;
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
       }
 
-      window.onSpotifyIframeApiReady = function (api) {
-        api.createController(slot, {
-          uri: 'spotify:playlist:' + SPOTIFY_PLAYLIST,
-          width: '100%',
-          height: EMBED_H
-        }, function (c) {
-          spotify = c;
-          fit();
-        });
-      };
-
-      if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
-      window.addEventListener('resize', fit);
-
-      var sc = document.createElement('script');
-      sc.src = 'https://open.spotify.com/embed/iframe-api/v1';
-      sc.async = true;
-      document.body.appendChild(sc);
+      function tickProgress() {
+        var loop = ((Date.now() - pageStart) / 1000) % TRACK_LEN;
+        elapsedEl.textContent = formatTime(loop);
+        remainingEl.textContent = '-' + formatTime(TRACK_LEN - loop);
+        fillEl.style.width = (loop / TRACK_LEN * 100) + '%';
+        requestAnimationFrame(tickProgress);
+      }
+      requestAnimationFrame(tickProgress);
     })();
   </script>
+
+
 </body>
 </html>
