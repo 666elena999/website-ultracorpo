@@ -627,19 +627,18 @@
     <svg class="ipod-body" viewBox="0 0 2208 2208" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="chromeV" gradientUnits="userSpaceOnUse" x1="0" y1="359" x2="0" y2="1923">
-          <stop offset="0" stop-color="#f1f1f3"/>
+          <stop offset="0" stop-color="#ececef"/>
           <stop offset="0.08" stop-color="#ffffff"/>
           <stop offset="0.40" stop-color="#f3f3f5"/>
-          <stop offset="0.56" stop-color="#d9d9dd"/>
-          <stop offset="0.600" stop-color="#9c9ca2"/>
-          <stop offset="0.615" stop-color="#26262b"/>
-          <stop offset="0.66" stop-color="#121215"/>
-          <stop offset="0.705" stop-color="#4a4a52"/>
-          <stop offset="0.715" stop-color="#e4e4e8"/>
-          <stop offset="0.80" stop-color="#ffffff"/>
-          <stop offset="0.90" stop-color="#e6e6ea"/>
-          <stop offset="0.965" stop-color="#a6a6ac"/>
-          <stop offset="1" stop-color="#5a5a62"/>
+          <stop offset="0.54" stop-color="#d6d6da"/>
+          <stop offset="0.60" stop-color="#6e6e75"/>
+          <stop offset="0.645" stop-color="#18181c"/>
+          <stop offset="0.68" stop-color="#121215"/>
+          <stop offset="0.725" stop-color="#5e5e66"/>
+          <stop offset="0.79" stop-color="#e8e8ec"/>
+          <stop offset="0.86" stop-color="#ffffff"/>
+          <stop offset="0.93" stop-color="#dcdce0"/>
+          <stop offset="1" stop-color="#6a6a72"/>
         </linearGradient>
         <linearGradient id="chromeH" gradientUnits="userSpaceOnUse" x1="1070" y1="0" x2="2104" y2="0">
           <stop offset="0" stop-color="#000" stop-opacity="0.5"/>
@@ -1744,19 +1743,35 @@
 
 
   <script>
-    /* chrome: the reflection slides a little with the mouse or with phone tilt */
+    /* chrome: the reflection slides with the mouse, and with phone tilt
+       (iphones ask for permission once, on the first tap) */
     (function () {
       var g = document.getElementById('chromeV');
       if (!g || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-      var target = 0, cur = 0, raf = 0;
+      var target = 0, cur = 0, raf = 0, base = null;
       function tick() {
         cur += (target - cur) * 0.12;
         g.setAttribute('gradientTransform', 'translate(0 ' + cur.toFixed(1) + ')');
         raf = Math.abs(target - cur) > 0.3 ? requestAnimationFrame(tick) : 0;
       }
-      function go(v) { target = Math.max(-1, Math.min(1, v)) * 70; if (!raf) raf = requestAnimationFrame(tick); }
-      window.addEventListener('pointermove', function (e) { go((e.clientY / innerHeight - 0.5) * -2); }, { passive: true });
-      window.addEventListener('deviceorientation', function (e) { if (e.beta != null) go((e.beta - 45) / 30); }, { passive: true });
+      function go(v) { target = Math.max(-1, Math.min(1, v)) * 90; if (!raf) raf = requestAnimationFrame(tick); }
+      window.addEventListener('mousemove', function (e) { go((e.clientY / innerHeight - 0.5) * -2); }, { passive: true });
+      function onTilt(e) {
+        if (e.beta == null) return;
+        if (base === null) base = e.beta;          /* how you hold the phone right now = neutral */
+        go((e.beta - base) / 20);
+      }
+      function listen() { window.addEventListener('deviceorientation', onTilt, { passive: true }); }
+      var D = window.DeviceOrientationEvent;
+      if (D && typeof D.requestPermission === 'function') {
+        var asked = false;
+        document.addEventListener('touchend', function () {
+          if (asked) return; asked = true;
+          D.requestPermission().then(function (r) { if (r === 'granted') listen(); }).catch(function () {});
+        }, { passive: true });
+      } else if (D) {
+        listen();
+      }
     })();
   </script>
 </body>
