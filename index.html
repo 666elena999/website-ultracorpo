@@ -339,6 +339,21 @@
     border-radius: 999px;
   }
 
+  /* scrubbing: the bar turns into a line with a diamond, like the ipod */
+  .m-track { position: relative; }
+  .m-bar.scrub .m-track { overflow: visible; background: #bdbdc0; height: 2px; min-height: 2px; }
+  .m-bar.scrub .m-fill { background: transparent; position: relative; }
+  .m-bar.scrub .m-fill::after {
+    content: "";
+    position: absolute;
+    right: -0.75cqw;
+    top: 50%;
+    width: 1.5cqw;
+    height: 1.5cqw;
+    background: #111;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
   /* spotify's own player: a thin strip under the song, kept visible as spotify requires */
   .np-player {
     position: absolute;
@@ -1553,10 +1568,6 @@
         });
         var artistLine = lines[0], songLine = lines[1];
         var names = {};
-        fetch('tracks.json', { cache: 'no-cache' })
-          .then(function (r) { return r.json(); })
-          .then(function (d) { names = (d && d.tracks) || {}; if (uri) setTrackText(); })
-          .catch(function () {});
 
         function setLine(L, text) {
           text = LOWERCASE ? String(text || '').toLowerCase() : String(text || '');
@@ -1598,10 +1609,14 @@
         }
         var elEl = el.querySelector('.m-el');
         var remEl = el.querySelector('.m-rem');
+        var barEl = el.querySelector('.m-bar');
         var fillEl = el.querySelector('.m-fill');
 
         var ctrl = null, uri = null, pos = 0, dur = 0, isPaused = true, stamp = 0, started = false;
         var playlistName = '';
+        var queue = [], qi = 0;          /* shuffled track list (from tracks.json) */
+        var nearEnd = false, advancing = false;
+        var scrubTimer = null, lastSeek = 0;
 
         function fmt(ms) {
           var s = Math.max(0, Math.floor(ms / 1000));
@@ -1639,13 +1654,57 @@
           });
         }
 
-        function paint() {
+        function now() {
           var p = pos + (isPaused ? 0 : Date.now() - stamp);
-          if (dur) p = Math.min(p, dur);
+          return dur ? Math.min(p, dur) : p;
+        }
+
+        var painting = false;
+        function paint() {
+          var p = now();
           elEl.textContent = fmt(p);
           remEl.textContent = '-' + fmt(dur - p);
           fillEl.style.width = (dur ? p / dur * 100 : 0) + '%';
-          if (!isPaused) requestAnimationFrame(paint);
+          if (!isPaused) requestAnimationFrame(paint); else painting = false;
+        }
+        function repaint() { if (!painting || isPaused) { painting = true; paint(); } }
+
+        function shuffle(a) {
+          for (var i = a.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+          }
+          return a;
+        }
+
+        /* play queue[i]; wraps around, and reshuffles after the last song */
+        function playAt(i) {
+          if (!ctrl || !queue.length) return;
+          if (i >= queue.length) { shuffle(queue); i = 0; }
+          if (i < 0) i = queue.length - 1;
+          qi = i;
+          nearEnd = false; advancing = false;
+          pos = 0; dur = 0; stamp = Date.now();
+          onTrack(queue[qi]);
+          repaint();
+          ctrl.loadUri(queue[qi]);
+          ctrl.play();
+        }
+
+        function seekTo(ms) {
+          if (!ctrl || !dur) return;
+          ms = Math.max(0, Math.min(dur - 500, ms));
+          pos = ms; stamp = Date.now();
+          repaint();
+          var t = Date.now();
+          if (t - lastSeek > 120) { lastSeek = t; ctrl.seek(ms / 1000); }
+          else { clearTimeout(seekTo.t); seekTo.t = setTimeout(function () { lastSeek = Date.now(); ctrl.seek(pos / 1000); }, 130); }
+        }
+
+        /* the diamond on the bar while scrubbing, like the ipod */
+        function scrubOn() {
+          barEl.classList.add('scrub');
+          clearTimeout(scrubTimer);
+          scrubTimer = setTimeout(function () { barEl.classList.remove('scrub'); }, 2500);
         }
 
         function fit() {
@@ -1657,41 +1716,87 @@
           f.style.transform = 'scale(' + k + ')';
         }
 
-        window.onSpotifyIframeApiReady = function (api) {
-          api.createController(slot, {
-            uri: 'spotify:playlist:' + SPOTIFY_PLAYLIST,
-            width: '100%',
-            height: EMBED_H
-          }, function (c) {
-            ctrl = c;
-            fit();
-            c.addListener('playback_started', function (e) { started = true; onTrack(e.data && e.data.playingURI); });
-            c.addListener('playback_update', function (e) {
-              var d = e.data || {};
-              if (d.playingURI) { started = true; onTrack(d.playingURI); }
-              var was = isPaused;
-              pos = d.position || 0; dur = d.duration || 0;
-              isPaused = !!d.isPaused || !!d.isBuffering; stamp = Date.now();
-              if (was || isPaused) paint();
+        function start(first) {
+          window.onSpotifyIframeApiReady = function (api) {
+            api.createController(slot, { uri: first, width: '100%', height: EMBED_H }, function (c) {
+              ctrl = c;
+              fit();
+              if (queue.length) onTrack(queue[0]);
+              c.addListener('playback_started', function (e) { started = true; onTrack(e.data && e.data.playingURI); });
+              c.addListener('playback_update', function (e) {
+                var d = e.data || {};
+                if (d.playingURI && (!queue.length || d.playingURI === queue[qi])) { started = true; onTrack(d.playingURI); }
+                pos = d.position || 0; dur = d.duration || 0;
+                var paused = !!d.isPaused || !!d.isBuffering;
+                isPaused = paused; stamp = Date.now();
+                repaint();
+                /* song finished: go on to the next one in the shuffled order */
+                if (queue.length && dur && (!d.playingURI || d.playingURI === queue[qi])) {
+                  if (!d.isPaused && pos >= dur - 1500) nearEnd = true;
+                  if (!advancing && ((nearEnd && d.isPaused) || pos >= dur - 250)) {
+                    advancing = true;
+                    setTimeout(function () { playAt(qi + 1); }, 300);
+                  }
+                }
+              });
             });
-          });
-        };
-        if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
-        window.addEventListener('resize', fit);
-        var sc = document.createElement('script');
-        sc.src = 'https://open.spotify.com/embed/iframe-api/v1';
-        sc.async = true;
-        document.body.appendChild(sc);
+          };
+          if (window.ResizeObserver) new ResizeObserver(fit).observe(box);
+          window.addEventListener('resize', fit);
+          var sc = document.createElement('script');
+          sc.src = 'https://open.spotify.com/embed/iframe-api/v1';
+          sc.async = true;
+          document.body.appendChild(sc);
+        }
+
+        /* shuffle the songs from tracks.json; without it, fall back to the playlist in spotify's order */
+        fetch('tracks.json', { cache: 'no-cache' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            names = (d && d.tracks) || {};
+            queue = shuffle(Object.keys(names));
+            start(queue.length ? queue[0] : 'spotify:playlist:' + SPOTIFY_PLAYLIST);
+          })
+          .catch(function () { start('spotify:playlist:' + SPOTIFY_PLAYLIST); });
 
         music = {
           type: 'music',
           title: 'now playing',
           el: el,
-          toggle: function () { if (ctrl) ctrl.togglePlay(); },
+          ready: function () { return !!ctrl; },
+          /* play/pause button */
+          toggle: function () {
+            if (!ctrl) return;
+            if (!started && queue.length) { started = true; playAt(qi); }
+            else ctrl.togglePlay();
+          },
+          /* tap next / previous: next song; previous restarts, or goes back if near the start */
           skip: function (dir) {
             if (!ctrl) return;
-            if (dir < 0 || !dur) { ctrl.restart(); return; }
-            ctrl.seek(Math.max(0, dur / 1000 - 0.3)); /* jump to the end: spotify moves on to the next song */
+            if (queue.length) {
+              if (dir < 0 && now() > 3000) { seekTo(0); return; }
+              playAt(qi + dir);
+              return;
+            }
+            if (dir < 0 || !dur) ctrl.restart();
+            else ctrl.seek(Math.max(0, dur / 1000 - 0.3));
+          },
+          /* hold next / previous: fast forward / rewind */
+          hold: function (dir, dt) {
+            if (!ctrl || !dur) return;
+            scrubOn();
+            seekTo(now() + dir * dt * 8000);
+          },
+          /* center button: scrubber, then the wheel moves through the song */
+          center: function () {
+            if (barEl.classList.contains('scrub')) { clearTimeout(scrubTimer); barEl.classList.remove('scrub'); }
+            else scrubOn();
+          },
+          /* wheel: scrub through the song */
+          wheel: function (dir) {
+            if (!ctrl || !dur) return;
+            scrubOn();
+            seekTo(now() + dir * Math.max(2000, dur / 60));
           }
         };
         return music;
@@ -1789,6 +1894,7 @@
           position -= dir * 14; // scrub the scrolling title
           return;
         }
+        if (v.type === 'music') { v.wheel(dir); return; }
         if (v.type === 'list') {
           var n = v.items.length;
           var next = Math.max(0, Math.min(n - 1, v.sel + dir));
@@ -1817,7 +1923,7 @@
 
         if (region === 'center') {
           if (!v) paused = !paused;
-          else if (v.type === 'music') v.toggle();
+          else if (v.type === 'music') v.center();
           else if (v.type === 'list') activate(v.items[v.sel]);
           else if (v.type === 'flow') openFromFlow(v);
           else if (v.type === 'photo') v.setAuto(!v.auto);
@@ -1827,8 +1933,9 @@
 
         if (region === 'play') {
           spawnHearts(buttons.play);
-          if (!v) paused = !paused;
-          else if (v.type === 'music') v.toggle();
+          if (v && v.type === 'music') v.toggle();
+          else if ((!v || v.type === 'list') && music && music.ready()) music.toggle();
+          else if (!v) paused = !paused;
           else if (v.type === 'photo') v.setAuto(!v.auto);
           else if (v.type === 'flow') {
             var fp = v.list[v.sel];
@@ -2027,6 +2134,7 @@
         if (v) {
           speed = paused ? 0 : NORMAL_SPEED;
           if (heldDir !== 0 && v.type === 'text') v.el.scrollTop += heldDir * SCROLL_SPEED * dt;
+          if (heldDir !== 0 && v.type === 'music') v.hold(heldDir, dt);
         } else {
           speed = heldDir !== 0 ? heldDir * FAST_SPEED : (paused ? 0 : NORMAL_SPEED);
         }
