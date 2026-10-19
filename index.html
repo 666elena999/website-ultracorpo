@@ -1527,6 +1527,8 @@
             var dist = txt.offsetWidth - lbl.clientWidth;
             if (dist > 2) {
               txt.style.setProperty('--dist', dist + 'px');
+              /* same speed as every other scrolling line (40px per second); the move is 64% of the loop */
+              txt.style.animationDuration = Math.max(3, dist / 40 / 0.64) + 's';
               li.classList.add('long');
             }
             // keep the highlighted row in view
