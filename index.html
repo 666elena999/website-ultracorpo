@@ -1528,9 +1528,15 @@
           var on = i === view.sel;
           li.classList.toggle('sel', on);
           li.setAttribute('aria-selected', on ? 'true' : 'false');
-          // every row that is too long to fit keeps scrolling, highlighted or not
-          if (!li._tick) li._tick = 'row' + (++rowTickId);
-          if (!tickers[li._tick]) setTicker(li._tick, li.querySelector('.lbl'), li.querySelector('.txt'));
+          // only the highlighted line scrolls, and only inside the pages (exhibitions, talks, writing,
+          // press, grants and residencies); nothing scrolls in the main menu
+          if (on && view.scrollRows) {
+            if (view.tickEl !== li) {
+              clearTicker('row');
+              setTicker('row', li.querySelector('.lbl'), li.querySelector('.txt'), true);
+              view.tickEl = li;
+            }
+          }
           if (on) {
             // keep the highlighted row in view
             var top = li.offsetTop, bottom = top + li.offsetHeight;
@@ -1734,6 +1740,7 @@
               open: function () { return projectView(list, i, title); }
             };
           }));
+          cache[key].scrollRows = true;
         }
         return cache[key];
       }
@@ -2071,6 +2078,7 @@
 
       function render() {
         clearTickers();
+        stack.forEach(function (s) { s.tickEl = null; });
         var v = current();
         stage.classList.toggle('in-menu', !!v);
         var isMusic = !!v && v.type === 'music';
@@ -2349,17 +2357,21 @@
          at NORMAL_SPEED (the same speed as the now playing title and the music lines) ---------- */
 
       var tickers = {};
-      var rowTickId = 0;
 
-      function setTicker(key, box, inner) {
+      // always = scroll even when the line fits (used for the highlighted line inside the pages)
+      function setTicker(key, box, inner, always) {
         clearTicker(key);
         if (!box || !inner) return;
-        if (inner.scrollWidth - box.clientWidth <= 2) return;
+        var fits = inner.scrollWidth - box.clientWidth <= 2;
+        if (fits && !always) return;
         var text = inner.textContent;
         inner.textContent = '';
-        var a = el('span', 'tick-copy', text), b = el('span', 'tick-copy', text);
-        b.setAttribute('aria-hidden', 'true');
+        var a = el('span', 'tick-copy', text);
         inner.appendChild(a);
+        // a short line gets space after it, so it crosses the row once before coming back
+        if (fits) a.style.paddingRight = (box.clientWidth - a.offsetWidth + parseFloat(getComputedStyle(a).paddingRight)) + 'px';
+        var b = a.cloneNode(true);
+        b.setAttribute('aria-hidden', 'true');
         inner.appendChild(b);
         box.classList.add('ticking');
         tickers[key] = { box: box, inner: inner, text: text, w: a.offsetWidth, x: 0 };
