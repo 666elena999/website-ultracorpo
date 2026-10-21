@@ -2345,7 +2345,7 @@
       ring.addEventListener('lostpointercapture', endGesture);
       ring.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-      /* ---------- every line in menus and cover flow titles: loop continuously, like the now playing title,
+      /* ---------- long titles in menus and cover flow: loop continuously, like the now playing title,
          at NORMAL_SPEED (the same speed as the now playing title and the music lines) ---------- */
 
       var tickers = {};
@@ -2354,21 +2354,15 @@
       function setTicker(key, box, inner) {
         clearTicker(key);
         if (!box || !inner) return;
+        if (inner.scrollWidth - box.clientWidth <= 2) return;
         var text = inner.textContent;
-        if (!text.trim()) return;
         inner.textContent = '';
-        // every line scrolls, short ones too
-        var a = el('span', 'tick-copy', text);
-        inner.appendChild(a);
-        // a short line gets extra space after it, so only one copy crosses the row at a time
-        var textW = a.offsetWidth;
-        if (textW < box.clientWidth) a.style.paddingRight = (box.clientWidth - textW + parseFloat(getComputedStyle(a).paddingRight)) + 'px';
-        var w = a.offsetWidth || 1;
-        var b = a.cloneNode(true);
+        var a = el('span', 'tick-copy', text), b = el('span', 'tick-copy', text);
         b.setAttribute('aria-hidden', 'true');
+        inner.appendChild(a);
         inner.appendChild(b);
         box.classList.add('ticking');
-        tickers[key] = { box: box, inner: inner, text: text, w: w, x: 0 };
+        tickers[key] = { box: box, inner: inner, text: text, w: a.offsetWidth, x: 0 };
       }
 
       function clearTicker(key) {
