@@ -525,14 +525,7 @@
     color: #fff;
   }
 
-  .list li.sel.long .txt {
-    animation: rowScroll 7s linear infinite;
-  }
 
-  @keyframes rowScroll {
-    0%, 18%   { transform: translateX(0); }
-    82%, 100% { transform: translateX(calc(-1 * var(--dist, 0px))); }
-  }
 
   .text-view {
     height: 100%;
@@ -770,7 +763,17 @@
     font-size: max(9px, 1.6cqw);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+  }
+
+  .flow-title.ticking {
+    text-align: left;
+  }
+
+  .flow-title span,
+  .list li .txt {
+    display: inline-block;
+    white-space: nowrap;
+    will-change: transform;
   }
 
   .flow-year {
@@ -845,7 +848,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .flow .cover { transition: none; }
-    .list li.sel.long .txt { animation: none; }
   }
 
 
@@ -1520,17 +1522,8 @@
           var on = i === view.sel;
           li.classList.toggle('sel', on);
           li.setAttribute('aria-selected', on ? 'true' : 'false');
-          li.classList.remove('long');
           if (on) {
-            var lbl = li.querySelector('.lbl');
-            var txt = li.querySelector('.txt');
-            var dist = txt.offsetWidth - lbl.clientWidth;
-            if (dist > 2) {
-              txt.style.setProperty('--dist', dist + 'px');
-              /* same speed as every other scrolling line (40px per second); the move is 64% of the loop */
-              txt.style.animationDuration = Math.max(3, dist / 40 / 0.64) + 's';
-              li.classList.add('long');
-            }
+            setTicker('row', li.querySelector('.lbl'), li.querySelector('.txt'));
             // keep the highlighted row in view
             var top = li.offsetTop, bottom = top + li.offsetHeight;
             if (top < view.el.scrollTop) view.el.scrollTop = top;
@@ -1672,6 +1665,7 @@
         var st = el('div', 'flow-stage');
         var cap = el('div', 'flow-cap');
         var ct = el('div', 'flow-title');
+        ct.appendChild(el('span'));
         var cy = el('div', 'flow-year');
         cap.appendChild(ct);
         cap.appendChild(cy);
@@ -1712,7 +1706,8 @@
           requestAnimationFrame(function () { requestAnimationFrame(function () { v.el.classList.remove('still'); }); });
         }
         var p = v.list[v.sel];
-        v.ct.textContent = disp(p.title);
+        v.ct.firstChild.textContent = disp(p.title);
+        setTicker('flow', v.ct, v.ct.firstChild);
         v.cy.textContent = disp(p.year || '');
       }
 
@@ -2067,6 +2062,7 @@
       }
 
       function render() {
+        clearTickers();
         var v = current();
         stage.classList.toggle('in-menu', !!v);
         var isMusic = !!v && v.type === 'music';
@@ -2341,6 +2337,50 @@
       ring.addEventListener('lostpointercapture', endGesture);
       ring.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
+      /* ---------- long titles in menus and cover flow: wait, scroll to the end, wait, jump back.
+         they move at NORMAL_SPEED, the same speed as the now playing title and the music lines ---------- */
+
+      var PAUSE = 1.2;   // seconds a long title waits at the start and at the end
+      var tickers = {};
+
+      function setTicker(key, box, inner) {
+        clearTicker(key);
+        if (!box || !inner) return;
+        var dist = inner.scrollWidth - box.clientWidth;
+        if (dist <= 2) return;
+        box.classList.add('ticking');
+        tickers[key] = { box: box, inner: inner, dist: dist, x: 0, phase: 0, t: 0 };
+      }
+
+      function clearTicker(key) {
+        var k = tickers[key];
+        if (!k) return;
+        k.inner.style.transform = '';
+        k.box.classList.remove('ticking');
+        delete tickers[key];
+      }
+
+      function clearTickers() {
+        Object.keys(tickers).forEach(clearTicker);
+      }
+
+      function stepTickers(dt) {
+        Object.keys(tickers).forEach(function (key) {
+          var k = tickers[key];
+          if (k.phase === 0) {
+            k.t += dt;
+            if (k.t >= PAUSE) { k.phase = 1; k.t = 0; }
+          } else if (k.phase === 1) {
+            k.x = Math.min(k.dist, k.x + NORMAL_SPEED * dt);
+            if (k.x >= k.dist) k.phase = 2;
+          } else {
+            k.t += dt;
+            if (k.t >= PAUSE) { k.phase = 0; k.t = 0; k.x = 0; }
+          }
+          k.inner.style.transform = 'translateX(' + (-k.x) + 'px)';
+        });
+      }
+
       /* ---------- now playing: scrolling title ---------- */
 
       var spans = document.querySelectorAll('.marquee-track span');
@@ -2383,6 +2423,7 @@
           while (position > 0) position -= spanWidth;
         }
         track.style.transform = 'translateX(' + position + 'px)';
+        stepTickers(dt);
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
