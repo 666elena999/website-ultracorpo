@@ -769,6 +769,12 @@
     text-align: left;
   }
 
+  /* looping copies of a long title: same gap as the now playing title */
+  .tick-copy {
+    display: inline-block;
+    padding-right: 6.071cqw;
+  }
+
   .flow-title span,
   .list li .txt {
     display: inline-block;
@@ -2337,25 +2343,30 @@
       ring.addEventListener('lostpointercapture', endGesture);
       ring.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-      /* ---------- long titles in menus and cover flow: wait, scroll to the end, wait, jump back.
-         they move at NORMAL_SPEED, the same speed as the now playing title and the music lines ---------- */
+      /* ---------- long titles in menus and cover flow: loop continuously, like the now playing title,
+         at NORMAL_SPEED (the same speed as the now playing title and the music lines) ---------- */
 
-      var PAUSE = 1.2;   // seconds a long title waits at the start and at the end
       var tickers = {};
 
       function setTicker(key, box, inner) {
         clearTicker(key);
         if (!box || !inner) return;
-        var dist = inner.scrollWidth - box.clientWidth;
-        if (dist <= 2) return;
+        if (inner.scrollWidth - box.clientWidth <= 2) return;
+        var text = inner.textContent;
+        inner.textContent = '';
+        var a = el('span', 'tick-copy', text), b = el('span', 'tick-copy', text);
+        b.setAttribute('aria-hidden', 'true');
+        inner.appendChild(a);
+        inner.appendChild(b);
         box.classList.add('ticking');
-        tickers[key] = { box: box, inner: inner, dist: dist, x: 0, phase: 0, t: 0 };
+        tickers[key] = { box: box, inner: inner, text: text, w: a.offsetWidth, x: 0 };
       }
 
       function clearTicker(key) {
         var k = tickers[key];
         if (!k) return;
         k.inner.style.transform = '';
+        k.inner.textContent = k.text;
         k.box.classList.remove('ticking');
         delete tickers[key];
       }
@@ -2367,16 +2378,9 @@
       function stepTickers(dt) {
         Object.keys(tickers).forEach(function (key) {
           var k = tickers[key];
-          if (k.phase === 0) {
-            k.t += dt;
-            if (k.t >= PAUSE) { k.phase = 1; k.t = 0; }
-          } else if (k.phase === 1) {
-            k.x = Math.min(k.dist, k.x + NORMAL_SPEED * dt);
-            if (k.x >= k.dist) k.phase = 2;
-          } else {
-            k.t += dt;
-            if (k.t >= PAUSE) { k.phase = 0; k.t = 0; k.x = 0; }
-          }
+          if (!k.w) k.w = k.inner.firstChild.offsetWidth;
+          if (!k.w) return;
+          k.x = (k.x + NORMAL_SPEED * dt) % k.w;
           k.inner.style.transform = 'translateX(' + (-k.x) + 'px)';
         });
       }
