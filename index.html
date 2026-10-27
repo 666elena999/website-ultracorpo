@@ -1488,6 +1488,7 @@
 
       function openLink(href) {
         if (!href) return;
+        gcTrack('out: ' + href.replace(/^mailto:/, 'email: ').replace(/^https?:\/\/(www\.)?/, ''), true);
         if (href.indexOf('mailto:') === 0) { window.location.href = href; return; }
         window.open(href, '_blank', 'noopener');
       }
@@ -2071,6 +2072,30 @@
 
       function current() { return stack[stack.length - 1]; }
 
+      /* ---------- analytics: count each screen opened (goatcounter) ---------- */
+      var counted = typeof WeakSet === 'function' ? new WeakSet() : null;
+      function slug(t) {
+        return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'item';
+      }
+      function gcTrack(path, isEvent) {
+        try {
+          if (location.protocol === 'file:') return;
+          if (window.goatcounter && window.goatcounter.count) {
+            window.goatcounter.count({ path: path, title: path, event: !!isEvent });
+          }
+        } catch (e) {}
+      }
+      function trackView() {
+        var v = current();
+        if (!v || !counted || counted.has(v)) return;
+        counted.add(v);
+        gcTrack('/' + stack.map(function (s) {
+          // a project or entry page: use its own title, not the list it sits in
+          if (s.list && typeof s.idx === 'number' && s.list[s.idx]) return slug(s.list[s.idx].title);
+          return slug(s.title);
+        }).join('/'), false);
+      }
+
       function setStack(s) {
         stack = s;
         render();
@@ -2087,6 +2112,7 @@
         stage.classList.toggle('in-music', isMusic);
         hdr.textContent = v ? v.title : 'elena zaghis';
         if (!v) return;
+        trackView();
         screen.replaceChildren(v.el, scrollBar);
         if (v.type === 'list') renderList(v);
         else if (v.type === 'flow') { renderFlow(v); scrollBar.classList.remove('on'); }
@@ -2126,6 +2152,11 @@
       }
 
       screen.addEventListener('scroll', updateScrollBar, true);
+      // links clicked inside a page (the ↗ links)
+      screen.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+        if (a) gcTrack('out: ' + a.getAttribute('href').replace(/^mailto:/, 'email: ').replace(/^https?:\/\/(www\.)?/, ''), true);
+      }, true);
       window.addEventListener('resize', function () {
         measureSpan();
         var v = current();
