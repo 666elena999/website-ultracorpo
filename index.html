@@ -714,7 +714,10 @@
     top: 1cqw;
     height: 19.5cqw;
     transform-style: preserve-3d;
+    pointer-events: none; /* let clicks reach the covers behind it */
   }
+
+  .flow-stage .cover { pointer-events: auto; }
 
   .flow .cover {
     position: absolute;
@@ -1692,9 +1695,53 @@
           fill.style.width = '0%';
         };
         img.addEventListener('click', function () { v.setAuto(!v.auto); });
+        addSwipe(d, function (dir) { v.setAuto(false); v.show(v.n + dir); }, true);
         v.show(n);
         v.setAuto(!!auto);
         return v;
+      }
+
+      /* mouse, trackpad and touch: scroll or drag a cover flow or photo, as well as the wheel */
+      function addSwipe(target, step, oneStepPerDrag) {
+        var acc = 0, last = 0;
+        target.addEventListener('wheel', function (e) {
+          e.preventDefault();
+          var d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          if (e.deltaMode === 1) d *= 30;
+          var now = performance.now();
+          if (now - last > 250) acc = 0;
+          last = now;
+          acc += d;
+          if (Math.abs(acc) >= 60) { step(acc > 0 ? 1 : -1); acc = 0; }
+        }, { passive: false });
+        var down = null, moved = false;
+        target.addEventListener('pointerdown', function (e) {
+          if (e.button !== undefined && e.button !== 0) return;
+          down = { x: e.clientX, y: e.clientY, used: 0 };
+          moved = false;
+        });
+        target.addEventListener('pointermove', function (e) {
+          if (!down) return;
+          var dx = e.clientX - down.x;
+          if (!moved && Math.abs(dx) < 8) return;
+          if (!moved && Math.abs(e.clientY - down.y) > Math.abs(dx)) { down = null; return; }
+          moved = true;
+          var stepPx = 40;
+          var want = Math.trunc(-dx / stepPx);
+          if (oneStepPerDrag) want = Math.max(-1, Math.min(1, want));
+          while (down.used < want) { down.used++; step(1); }
+          while (down.used > want) { down.used--; step(-1); }
+        });
+        function end() { down = null; }
+        target.addEventListener('pointerup', end);
+        target.addEventListener('pointercancel', end);
+        target.addEventListener('pointerleave', end);
+        // a drag should not also count as a click on a cover
+        target.addEventListener('click', function (e) {
+          if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; }
+        }, true);
+        target.addEventListener('dragstart', function (e) { e.preventDefault(); });
+        target.style.touchAction = 'pan-y';
       }
 
       /* cover flow */
@@ -1727,6 +1774,10 @@
           });
           st.appendChild(c);
           return c;
+        });
+        addSwipe(d, function (dir) {
+          var nf = Math.max(0, Math.min(v.list.length - 1, v.sel + dir));
+          if (nf !== v.sel) { v.sel = nf; renderFlow(v); }
         });
         return v;
       }
