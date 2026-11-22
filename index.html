@@ -891,6 +891,18 @@
   .earbuds { display: none; }
   .stage-wrap { display: contents; }
 
+  /* ---------- desktop and tablets: opening the menu zooms into the ipod too ---------- */
+  .stage {
+    transform-origin: 72% 51.5%;
+    transition: transform 0.55s cubic-bezier(0.25, 0.8, 0.3, 1);
+  }
+  .stage.in-menu {
+    transform: translateX(calc(min(96vw, 100svh - 60px) * -0.22)) scale(1.33);
+  }
+  footer { transition: opacity 0.3s ease; }
+  body:has(.stage.in-menu) footer { opacity: 0; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .stage { transition: none; } }
+
   /* ---------- phones: home keeps the full composition. opening the menu zooms into the ipod so the screen is readable ---------- */
   @media (max-width: 600px) and (orientation: portrait) {
     .stage {
