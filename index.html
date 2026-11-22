@@ -1493,28 +1493,48 @@
         var b = img.parentNode && img.parentNode.querySelector('.pf-blur');
         if (b) b.style.backgroundImage = 'url(' + img.currentSrc + ')';
       }
-      var pfStripEl = null, pfStripFor = null;
+      var pfStripEl = null, pfStripFor = null, pfPrevN = 0, PF_PAD = 2;
       function pfStrip(v) {
         var p = v.project, count = p.images.pics.length;
         if (pfStripFor !== p) {
+          // the strip loops: copies of the last photos sit before the first, copies of the first after the last
           pfStripEl = el('div', 'pf-strip');
-          for (var i = 1; i <= count; i++) {
-            var im = el('img'); im.alt = disp(p.title); im.src = imgSrc(p, i, false); im.draggable = false;
+          pfStripEl.addEventListener('transitionend', pfSnap);
+          for (var i = -PF_PAD + 1; i <= count + PF_PAD; i++) {
+            var k = ((i - 1) % count + count) % count + 1;
+            var im = el('img'); im.alt = disp(p.title); im.src = imgSrc(p, k, false); im.draggable = false;
             im.addEventListener('load', function () { var c = current(); if (c && c.type === 'photo') pfCentre(c, true); });
             pfStripEl.appendChild(im);
           }
           pfStripFor = p;
+          pfPrevN = 0;
         }
         if (pfStripEl.parentNode !== pfSlot) pfSlot.replaceChildren(pfStripEl);
-        pfCentre(v, false);
+        pfCentre(v, true);
       }
-      function pfCentre(v, instant) {
-        var ims = pfStripEl.children, cur = ims[v.n - 1];
+      function pfMove(slot, instant) {
+        var ims = pfStripEl.children, cur = ims[slot];
         if (!cur) return;
-        for (var i = 0; i < ims.length; i++) ims[i].classList.toggle('on', i === v.n - 1);
+        for (var i = 0; i < ims.length; i++) ims[i].classList.toggle('on', i === slot);
         if (instant) pfStripEl.style.transition = 'none';
         pfStripEl.style.transform = 'translateX(' + (innerWidth / 2 - (cur.offsetLeft + cur.offsetWidth / 2)) + 'px)';
         if (instant) { void pfStripEl.offsetWidth; pfStripEl.style.transition = ''; }
+        pfStripEl.dataset.slot = slot;
+      }
+      function pfCentre(v, instant) {
+        var count = v.project.images.pics.length;
+        var slot = v.n - 1 + PF_PAD;
+        // wrapping: slide on to the copy, then jump back to the real photo without anyone noticing
+        if (!instant && count > 1 && pfPrevN === count && v.n === 1) slot = count + PF_PAD;
+        else if (!instant && count > 1 && pfPrevN === 1 && v.n === count) slot = PF_PAD - 1;
+        pfPrevN = v.n;
+        pfMove(slot, instant);
+      }
+      function pfSnap() {
+        var v = current();
+        if (!v || v.type !== 'photo') return;
+        var real = v.n - 1 + PF_PAD;
+        if (+pfStripEl.dataset.slot !== real) pfMove(real, true);
       }
       addEventListener('resize', function () { var v = current(); if (v && v.type === 'photo') pfCentre(v, true); });
       // swipe on phones
