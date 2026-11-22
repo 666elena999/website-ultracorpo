@@ -927,6 +927,11 @@
   /* a photo whose shape doesn't match the screen is shown whole, the sides filled with a soft blur of itself */
   .pf-blur { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(40px) brightness(0.9); transform: scale(1.1); opacity: 0; }
   .photo-full.fit .pf-blur { display: none; }
+  /* filmstrip: the current photo centred at full height, the previous and next ones visible at the sides */
+  .pf-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 14px; will-change: transform; transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.3, 1); }
+  .pf-strip img { flex: none; height: 100%; width: auto; max-width: 100vw; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+  .pf-strip img:not(.on) { opacity: 0.55; }
+  @media (prefers-reduced-motion: reduce) { .pf-strip { transition: none; } }
   /* empty space around a photo follows the theme: white in light, black in dark */
   .photo-full, .photo-full .pf-slot, .photo-full .photo-view { background: #fff; }
   html[data-theme="dark"] .photo-full, html[data-theme="dark"] .photo-full .pf-slot, html[data-theme="dark"] .photo-full .photo-view { background: #000; }
@@ -1484,7 +1489,40 @@
         var b = img.parentNode && img.parentNode.querySelector('.pf-blur');
         if (b) b.style.backgroundImage = 'url(' + img.currentSrc + ')';
       }
-      addEventListener('resize', function () { var v = current(); if (v && v.type === 'photo') pfFit(v.el.querySelector('img')); });
+      var pfStripEl = null, pfStripFor = null;
+      function pfStrip(v) {
+        var p = v.project, count = p.images.pics.length;
+        if (pfStripFor !== p) {
+          pfStripEl = el('div', 'pf-strip');
+          for (var i = 1; i <= count; i++) {
+            var im = el('img'); im.alt = disp(p.title); im.src = imgSrc(p, i, false); im.draggable = false;
+            im.addEventListener('load', function () { var c = current(); if (c && c.type === 'photo') pfCentre(c, true); });
+            pfStripEl.appendChild(im);
+          }
+          pfStripFor = p;
+        }
+        if (pfStripEl.parentNode !== pfSlot) pfSlot.replaceChildren(pfStripEl);
+        pfCentre(v, false);
+      }
+      function pfCentre(v, instant) {
+        var ims = pfStripEl.children, cur = ims[v.n - 1];
+        if (!cur) return;
+        for (var i = 0; i < ims.length; i++) ims[i].classList.toggle('on', i === v.n - 1);
+        if (instant) pfStripEl.style.transition = 'none';
+        pfStripEl.style.transform = 'translateX(' + (innerWidth / 2 - (cur.offsetLeft + cur.offsetWidth / 2)) + 'px)';
+        if (instant) { void pfStripEl.offsetWidth; pfStripEl.style.transition = ''; }
+      }
+      addEventListener('resize', function () { var v = current(); if (v && v.type === 'photo') pfCentre(v, true); });
+      // swipe on phones
+      (function () {
+        var x0 = null;
+        pfLayer.addEventListener('touchstart', function (e) { x0 = e.touches[0].clientX; }, { passive: true });
+        pfLayer.addEventListener('touchend', function (e) {
+          if (x0 === null) return;
+          var dx = e.changedTouches[0].clientX - x0; x0 = null;
+          if (Math.abs(dx) > 40) { e.preventDefault(); pfStep(dx < 0 ? 1 : -1); }
+        });
+      })();
       var scrollBar = screen.querySelector('.screen-scroll');
       var scrollThumb = screen.querySelector('.screen-thumb');
       var aboutEl = document.getElementById('about-view');
@@ -1703,7 +1741,7 @@
           img.src = imgSrc(p, v.n, false);
           [v.n % count + 1, (v.n - 2 + count) % count + 1].forEach(function (j) { new Image().src = imgSrc(p, j, false); });
           v.title = v.n + ' of ' + count;
-          if (current() === v) { hdr.textContent = v.title; if (pfCount) pfCount.textContent = v.title; }
+          if (current() === v) { hdr.textContent = v.title; if (pfLayer && !pfLayer.hidden && pfStripFor === p) pfCentre(v, false); }
           v.t0 = performance.now();
           fill.style.width = '0%';
         };
@@ -2224,8 +2262,7 @@
         if (!v) { pfSlot.replaceChildren(); return; }
         trackView();
         if (isPhoto) {
-          pfSlot.replaceChildren(v.el);
-          pfFit(v.el.querySelector('img'));
+          pfStrip(v);
           var pp = v.project || {};
           pfCap.replaceChildren();
           var t1 = el('p', '', disp(pp.title || '') + (pp.year ? ', ' + disp(pp.year) : ''));
