@@ -926,7 +926,10 @@
   .photo-full .photo-view img { position: relative; width: 100%; height: 100%; object-fit: cover; }
   /* a photo whose shape doesn't match the screen is shown whole, the sides filled with a soft blur of itself */
   .pf-blur { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(40px) brightness(0.9); transform: scale(1.1); opacity: 0; }
-  .photo-full.fit .pf-blur { opacity: 1; }
+  .photo-full.fit .pf-blur { display: none; }
+  /* empty space around a photo follows the theme: white in light, black in dark */
+  .photo-full, .photo-full .pf-slot, .photo-full .photo-view { background: #fff; }
+  html[data-theme="dark"] .photo-full, html[data-theme="dark"] .photo-full .pf-slot, html[data-theme="dark"] .photo-full .photo-view { background: #000; }
   .photo-full.fit .photo-view img { object-fit: contain; }
   .photo-full .photo-view { overflow: hidden; }
   .photo-full .photo-bar { display: none !important; }
