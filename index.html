@@ -891,6 +891,20 @@
   .earbuds { display: none; }
   .stage-wrap { display: contents; }
 
+  /* ---------- phones: home keeps the full composition. opening the menu zooms into the ipod so the screen is readable ---------- */
+  @media (max-width: 600px) and (orientation: portrait) {
+    .stage {
+      transform-origin: 72% 51.5%;
+      transition: transform 0.55s cubic-bezier(0.25, 0.8, 0.3, 1);
+    }
+    .stage.in-menu {
+      transform: translateX(-21vw) scale(2.03);
+    }
+  }
+  @media (max-width: 600px) and (orientation: portrait) and (prefers-reduced-motion: reduce) {
+    .stage { transition: none; }
+  }
+
   /* ---------- dark mode ---------- */
 
   /* light / dark switch: a pill with a sliding knob, label centred in the free side */
