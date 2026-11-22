@@ -232,7 +232,7 @@
     width: 38.859%;
     height: 8.300%;
     overflow: hidden;
-    font-size: 1.6cqw;
+    font-size: max(11px, 1.9cqw);
     line-height: 1.35;
     color: #333;
     text-align: center;
@@ -479,7 +479,7 @@
     align-items: center;
     height: 3.35cqw;
     padding: 0 2.4cqw 0 0.9cqw;
-    font-size: max(9px, 1.7cqw);
+    font-size: max(11px, 2cqw);
     font-weight: 600;
     color: #111;
     cursor: pointer;
@@ -536,7 +536,7 @@
     scrollbar-width: none;
     -ms-overflow-style: none;
     padding: 1.8cqw 3.6cqw 2cqw 2cqw;
-    font-size: max(9px, 1.6cqw);
+    font-size: max(11px, 1.95cqw);
     line-height: 1.42;
     color: #333;
     text-align: left;
@@ -567,7 +567,7 @@
   }
 
   .text-view .p-title {
-    font-size: max(10px, 1.95cqw);
+    font-size: max(12px, 2.3cqw);
     font-weight: 700;
     color: #111;
     line-height: 1.25;
@@ -764,7 +764,7 @@
 
   .flow-title {
     font-weight: 700;
-    font-size: max(9px, 1.6cqw);
+    font-size: max(11px, 1.9cqw);
     white-space: nowrap;
     overflow: hidden;
   }
@@ -788,7 +788,7 @@
 
   .flow-year {
     margin-top: 0.2em;
-    font-size: max(8px, 1.3cqw);
+    font-size: max(10px, 1.55cqw);
     color: #9a9a9a;
     min-height: 1.2em;
   }
@@ -1139,7 +1139,6 @@
          images { dir: folder name inside images/, pics: [up to 5 picture numbers, first = cover] }
                 pictures are images/<dir>/01.jpg, 02.jpg ... with small copies in images/<dir>/t/
 
-       cv entries are copied from elena zaghis_CV_2026.pdf as written.
        LOWERCASE turns everything lowercase on screen (except KEEP_CASE),
        so the data can stay exactly as in the cv.
        ===================================================================== */
@@ -1149,12 +1148,11 @@
     var LOWERCASE = true;
     var IMAGE_ROOT = "images/";
     var SLIDE_SECONDS = 3;
-    var KEEP_CASE = ["AIxDESIGN", "V.I.B.E", "EX26-P-01", "EX26", "EX25-P-01"];
+    var KEEP_CASE = ["V.I.B.E", "EX26-P-01", "EX26", "EX25-P-01"];
 
     /* every project uses the same fields:
          title, sub, year, role, collaborators, where (list), text (max 125 words),
-         images: { dir: folder in images/, pics: [up to 5 picture numbers, the first is the cover] }
-       texts are your own sentences from notion and "portfolio 2026 .pdf", shortened by leaving sentences out */
+         images: { dir: folder in images/, pics: [up to 5 picture numbers, the first is the cover] } */
     var ART = [
       {
         title: "EX26-P-01",
@@ -1241,16 +1239,6 @@
         images: { dir: "amadee", pics: [1], cover: true }
       },
       {
-        title: "AIxDESIGN x claude",
-        hide: true,
-        year: "2026",
-        role: "event campaign, on-site and post-event content",
-        collaborators: "AIxDESIGN",
-        where: ["Nxt Museum, Amsterdam"],
-        text: "",
-        link: "https://aixdesign.co/projects/please-touch-the-art-with-claude"
-      },
-      {
         title: "The Online Marketplace of Ideas",
         year: "2026",
         where: ["Palazzo Diedo, Venice"],
@@ -1270,59 +1258,6 @@
         link: "https://www.dezeen.com/eventsguide/2026/04/kaldewei-bubbles-of-time-milan-2026/",
         images: { dir: "kaldewei", pics: [7, 3, 4, 5, 6, 8, 9], cover: true }
       },
-      {
-        title: "The End of the Real",
-        hide: true,
-        year: "2026",
-        role: "researcher, designer",
-        collaborators: "TBA21–Academy, Museo Nacional Thyssen-Bornemisza, Domestic Data Streamers",
-        text: "",
-        link: "http://www.commonrealities-commonmuseums.com/"
-      },
-      {
-        title: "A Stratigraphy of Vision",
-        hide: true,
-        year: "2026",
-        role: "graphic design (grid, typography & key visual)",
-        collaborators: "Noura Tafeche, Aksioma",
-        text: "Graphic design for Noura Tafeche's lecture \"A Stratigraphy of Vision\", hosted by Aksioma (Institute for Contemporary Art, Ljubljana).",
-        link: "https://aksioma.org/a-stratigraphy-of-vision"
-      },
-      {
-        title: "DE/MO Meet-Up: Democracies in the age of AI",
-        hide: true,
-        year: "2025",
-        role: "graphic designer",
-        text: "graphic design + visual direction for DE/MO Meet-Up: Democracies in the age of AI",
-        link: "https://dezwijger.nl/programma/de-mo-meet-up-democracies-in-the-age-of-ai"
-      },
-      {
-        title: "elements of body",
-        hide: true,
-        year: "2025",
-        role: "video content",
-        collaborators: "Nazlı (spacer woman)",
-        text: "video for Nazlı's (spacer woman) ep release",
-        link: ""
-      },
-      {
-        title: "festival: on slow AI",
-        hide: true,
-        year: "2024–ongoing",
-        where: ["AIxDESIGN, Amsterdam"],
-        role: "content lead & co-producer",
-        text: "",
-        link: "https://aixdesign.co/projects/aixdesign-festival-2025"
-      },
-      {
-        title: "broncode",
-        hide: true,
-        year: "2026",
-        where: ["KB, National Library of the Netherlands"],
-        role: "comms for AIxDESIGN",
-        text: "",
-        link: ""
-      }
     ];
 
     var EXHIBITIONS = [
@@ -1337,15 +1272,10 @@
       { year: "2025", title: "Bionicle Imaginarium Park—Group Exhibition curated by Theo Trian, Okay Space, Athens", link: "http://okay-space.com/" },
       { year: "2025", title: "BASE Milano—Making Kin, Milan", link: "https://base.milano.it/en/making-kin/" },
       { year: "2024", title: "Trifles and Troupes. Everything Lies Under the Surface—Group Exhibition curated by Ioanna Gerakidi, The Blender Gallery, Athens", link: "https://theblendergallery.com/en/exhibitions/trifles-and-troupes-everything-lies-under-the-surface/" },
-      { year: "2024", title: "Dutch Design Week ‘24—Graduation Show, Microstad, Eindhoven", link: "", hide: true },
       { year: "2024", title: "Vorspiel—Synthetic Tales, Backhouse Projects, Berlin", link: "https://vorspiel.berlin/spaces/backhaus-project" },
       { year: "2023", title: "Dutch Design Week ‘23—Cringe or Cool? De Fabriek, Eindhoven", link: "https://ddw.nl/en/programme/10731/the-meme-bootcamp" }
     ];
 
-    var SCREENINGS = [
-      { year: "2026", title: "V.I.B.E at Book Launch of Geert Lovink’s Platform Brutality, Institute of Network Cultures, Amsterdam", link: "https://networkcultures.org/geert/events/amsterdam-book-launch-platform-brutality/" },
-      { year: "2025", title: "V.I.B.E (Viral Ideology Broadcasting Experiment), CPDP, Brussels", link: "https://www.cpdpconferences.org/about-cpdp" }
-    ];
 
     var TALKS = [
       { year: "2026", title: "The End of the Real: Building Tools to Navigate Reality in the Absence of a Common Truth, Museo Nacional Thyssen-Bornemisza, Madrid", link: "https://www.museothyssen.org/en/organismo-art-26/presentation-cases" },
@@ -1368,19 +1298,7 @@
       { year: "2023", title: "Kuba Paris—Cringe or Cool?", link: "https://kubaparis.com/submission/365765" }
     ];
 
-    var EXPERIENCE = [
-      { year: "2026–ongoing", title: "Art Director & Marketing Manager, takt", link: "https://app.takt.community" },
-      { year: "2026–ongoing", title: "Guest Tutor (ArtEZ Zwolle, IE Madrid, Lichen AI)", link: "" },
-      { year: "2024–ongoing", title: "Content Lead & Co-producer Festival: On Slow AI, AIxDESIGN, Amsterdam", link: "https://aixdesign.co/festival" },
-      { year: "2020–ongoing", title: "Independent Designer (Art Direction, Speculative Design, Visual Communication, Production)", link: "" }
-    ];
 
-    var EDUCATION = [
-      { year: "2024–ongoing", title: "The New Centre for Research & Practice (scholarship), History, Design & Worldmaking", link: "https://thenewcentre.org/about/" },
-      { year: "2022–2024", title: "Design Academy Eindhoven, Master’s Degree GEO-Design with Formafantasma and Metahaven", link: "https://www.designacademy.nl/page/5809/geo%E2%80%94design" },
-      { year: "2014–2018", title: "Free University of Bozen, Faculty of Design and Art, Bachelor’s degree cum laude", link: "https://www.unibz.it" },
-      { year: "2017", title: "Université du Québec à Montréal, Faculté de Design Graphique, Exchange student (Erasmus)", link: "https://uqam.ca" }
-    ];
 
     var GRANTS = [
       { year: "2026", title: "Amarte Interdisciplinary Grant", link: "https://www.amarte.nl/en/projecten/interdisciplinair/excalibur-2026" },
@@ -1392,10 +1310,6 @@
       { year: "2018", title: "Erasmus+ Nida Art Colony, Vilnius", link: "https://www.transartists.org/en/air/nida-art-colony" }
     ];
 
-    var RESEARCH = [
-      { year: "2026", title: "Organismo 2026—TBA21–Academy and the Museo Nacional Thyssen-Bornemisza, Hybrid Online/Madrid", link: "https://tba21.org/tags/?tag=tba21_academy" },
-      { year: "2025", title: "RU Research Unit, Medialab Matadero, Madrid", link: "https://www.medialab-matadero.es" }
-    ];
 
     // the main menu, top to bottom. "list" = a playlist, "items" = a folder of playlists
     var MENU = [
@@ -1407,14 +1321,6 @@
       { label: "writing", list: WRITING, years: true },
       { label: "press", list: PRESS, years: true },
       { label: "grants and residencies", list: GRANTS, years: true },
-      // not shown for now. remove the // to bring a line back
-      // { label: "cv", items: [
-      //   { label: "experience", list: EXPERIENCE, years: true },
-      //   { label: "education", list: EDUCATION, years: true },
-      //   { label: "grants and residencies", list: GRANTS, years: true },
-      //   { label: "research programs", list: RESEARCH, years: true },
-      //   { label: "screenings", list: SCREENINGS, years: true }
-      // ] },
       { label: "now playing", music: true }
     ];
 
