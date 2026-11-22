@@ -934,7 +934,15 @@
   /* filmstrip: the current photo centred at full height, the previous and next ones visible at the sides */
   .pf-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 0; will-change: transform; transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.3, 1); }
   .pf-strip img { flex: none; height: 100%; width: auto; max-width: 100vw; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
-  .pf-strip img:not(.on) { opacity: 0.55; }
+  .pf-arrow {
+    all: unset; position: absolute; top: 50%; z-index: 2; transform: translateY(-50%);
+    padding: 18px 16px; cursor: pointer;
+    font: 300 34px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #fff; mix-blend-mode: difference;
+  }
+  .pf-arrow:focus-visible { outline: 2px solid #ff2f9e; }
+  .pf-left { left: 4px; }
+  .pf-right { right: 4px; }
   @media (prefers-reduced-motion: reduce) { .pf-strip { transition: none; } }
   /* empty space around a photo follows the theme: white in light, black in dark */
   .photo-full, .photo-full .pf-slot, .photo-full .photo-view { background: #fff; }
@@ -1216,6 +1224,8 @@
   <div class="photo-full" id="photo-full" hidden>
     <div class="pf-slot" id="pf-slot"></div>
     <button type="button" class="pf-close" id="pf-close" aria-label="close">&times;</button>
+    <button type="button" class="pf-arrow pf-left" id="pf-left" aria-label="previous picture">&lsaquo;</button>
+    <button type="button" class="pf-arrow pf-right" id="pf-right" aria-label="next picture">&rsaquo;</button>
     <div class="pf-cap" id="pf-cap"></div>
     <span class="pf-count" id="pf-count" hidden></span>
   </div>
@@ -2256,6 +2266,8 @@
       function pfStep(dir) { var v = current(); if (v && v.type === 'photo') { v.setAuto(false); v.show(v.n + dir); } }
       function pfClose() { var v = current(); if (v && v.type === 'photo') { stack.pop(); render(); } }
       document.getElementById('pf-close').addEventListener('click', pfClose);
+      document.getElementById('pf-left').addEventListener('click', function (e) { e.stopPropagation(); pfStep(-1); });
+      document.getElementById('pf-right').addEventListener('click', function (e) { e.stopPropagation(); pfStep(1); });
       pfSlot.addEventListener('click', function (e) { e.stopPropagation(); pfStep(1); }, true);
       document.addEventListener('keydown', function (e) {
         var v = current();
