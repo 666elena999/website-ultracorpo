@@ -923,7 +923,12 @@
   .photo-full { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; cursor: pointer; }
   .photo-full[hidden] { display: none; }
   .pf-slot, .photo-full .photo-view { position: absolute; inset: 0; height: auto; background: #000; }
-  .photo-full .photo-view img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-full .photo-view img { position: relative; width: 100%; height: 100%; object-fit: cover; }
+  /* a photo whose shape doesn't match the screen is shown whole, the sides filled with a soft blur of itself */
+  .pf-blur { position: absolute; inset: -40px; background: center / cover no-repeat; filter: blur(40px) brightness(0.9); transform: scale(1.1); opacity: 0; }
+  .photo-full.fit .pf-blur { opacity: 1; }
+  .photo-full.fit .photo-view img { object-fit: contain; }
+  .photo-full .photo-view { overflow: hidden; }
   .photo-full .photo-bar { display: none !important; }
   .pf-close, .pf-cap {
     position: absolute; z-index: 2;
@@ -1468,6 +1473,15 @@
       var pfSlot = document.getElementById('pf-slot');
       var pfCount = document.getElementById('pf-count');
       var pfCap = document.getElementById('pf-cap');
+      function pfFit(img) {
+        // fill the screen when the photo has roughly the screen's shape, otherwise show it whole
+        if (!img || !img.naturalWidth) return;
+        var r = (img.naturalWidth / img.naturalHeight) / (innerWidth / innerHeight);
+        pfLayer.classList.toggle('fit', r < 0.8 || r > 1.25);
+        var b = img.parentNode && img.parentNode.querySelector('.pf-blur');
+        if (b) b.style.backgroundImage = 'url(' + img.currentSrc + ')';
+      }
+      addEventListener('resize', function () { var v = current(); if (v && v.type === 'photo') pfFit(v.el.querySelector('img')); });
       var scrollBar = screen.querySelector('.screen-scroll');
       var scrollThumb = screen.querySelector('.screen-thumb');
       var aboutEl = document.getElementById('about-view');
@@ -1674,8 +1688,11 @@
         var bar = el('div', 'photo-bar');
         var fill = el('div', 'photo-fill');
         bar.appendChild(fill);
+        var blur = el('div', 'pf-blur');
+        d.appendChild(blur);
         d.appendChild(img);
         d.appendChild(bar);
+        img.addEventListener('load', function () { if (current() === v && !pfLayer.hidden) pfFit(img); });
         var count = p.images.pics.length;
         var v = { type: 'photo', title: '', el: d, project: p, n: n, auto: false, t0: 0, fill: fill };
         v.show = function (k) {
@@ -2205,6 +2222,7 @@
         trackView();
         if (isPhoto) {
           pfSlot.replaceChildren(v.el);
+          pfFit(v.el.querySelector('img'));
           var pp = v.project || {};
           pfCap.replaceChildren();
           var t1 = el('p', '', disp(pp.title || '') + (pp.year ? ', ' + disp(pp.year) : ''));
