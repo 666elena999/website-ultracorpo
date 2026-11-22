@@ -1534,7 +1534,7 @@
         var p = list[idx];
         var d = el('div', 'text-view');
         d.tabIndex = 0;
-        d.appendChild(el('p', 'p-title', disp(p.title)));
+        d.appendChild(el('p', 'p-title', disp(p.title).replace(/\s*—\s*/g, '\u2060—\u200B')));
         if (p.sub) d.appendChild(el('p', 'p-sub tight', disp(p.sub)));
         if (p.year) d.appendChild(el('p', 'tight', disp(p.year)));
         if (p.where && p.where.length) {
