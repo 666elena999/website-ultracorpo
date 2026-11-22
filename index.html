@@ -905,6 +905,30 @@
     .stage { transition: none; }
   }
 
+  /* ---------- photos open full screen, outside the ipod ---------- */
+  .photo-full {
+    position: fixed; inset: 0; z-index: 50;
+    background: #000; color: #fff;
+    display: flex; flex-direction: column;
+  }
+  .photo-full[hidden] { display: none; }
+  .pf-bar {
+    flex: none; display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px;
+    font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    position: relative; z-index: 2;
+  }
+  .pf-close { all: unset; cursor: pointer; padding: 6px 0; }
+  .pf-close:focus-visible { outline: 2px solid #ff2f9e; outline-offset: 3px; }
+  .pf-count { color: #9a9a9a; font-weight: 400; font-variant-numeric: tabular-nums; }
+  .pf-slot { flex: 1; min-height: 0; padding: 0 0 18px; }
+  .photo-full .photo-view { height: 100%; background: #000; }
+  .photo-full .photo-bar { left: 18px; right: 18px; bottom: 0; height: 3px; }
+  .pf-nav { all: unset; position: absolute; top: 50px; bottom: 30px; width: 30%; cursor: pointer; z-index: 1; }
+  .pf-prev { left: 0; cursor: w-resize; }
+  .pf-next { right: 0; cursor: e-resize; }
+  @media (hover: none) { .pf-nav { display: none; } } /* phones swipe instead */
+
   /* ---------- dark mode ---------- */
 
   /* light / dark switch: a pill with a sliding knob, label centred in the free side */
@@ -1162,6 +1186,13 @@
     <button type="button" class="hotspot hs-center" data-region="center" aria-label="Select"><span class="ripple"></span></button>
     <div class="lowbatt" id="lowbatt" hidden></div>
   </div>
+  </div>
+
+  <div class="photo-full" id="photo-full" hidden>
+    <div class="pf-bar"><button type="button" class="pf-close" id="pf-close">menu</button><span class="pf-count" id="pf-count"></span></div>
+    <div class="pf-slot" id="pf-slot"></div>
+    <button type="button" class="pf-nav pf-prev" id="pf-prev" aria-label="previous picture"></button>
+    <button type="button" class="pf-nav pf-next" id="pf-next" aria-label="next picture"></button>
   </div>
 
   <footer>
@@ -1425,6 +1456,9 @@
       var stage = document.querySelector('.stage');
       var screen = document.getElementById('screen');
       var hdr = document.getElementById('hdr-text');
+      var pfLayer = document.getElementById('photo-full');
+      var pfSlot = document.getElementById('pf-slot');
+      var pfCount = document.getElementById('pf-count');
       var scrollBar = screen.querySelector('.screen-scroll');
       var scrollThumb = screen.querySelector('.screen-thumb');
       var aboutEl = document.getElementById('about-view');
@@ -1640,7 +1674,7 @@
           img.src = imgSrc(p, v.n, false);
           [v.n % count + 1, (v.n - 2 + count) % count + 1].forEach(function (j) { new Image().src = imgSrc(p, j, false); });
           v.title = v.n + ' of ' + count;
-          if (current() === v) hdr.textContent = v.title;
+          if (current() === v) { hdr.textContent = v.title; if (pfCount) pfCount.textContent = v.title; }
           v.t0 = performance.now();
           fill.style.width = '0%';
         };
@@ -2128,6 +2162,19 @@
         }).join('/'), false);
       }
 
+      function pfStep(dir) { var v = current(); if (v && v.type === 'photo') { v.setAuto(false); v.show(v.n + dir); } }
+      function pfClose() { var v = current(); if (v && v.type === 'photo') { stack.pop(); render(); } }
+      document.getElementById('pf-close').addEventListener('click', pfClose);
+      document.getElementById('pf-prev').addEventListener('click', function () { pfStep(-1); });
+      document.getElementById('pf-next').addEventListener('click', function () { pfStep(1); });
+      document.addEventListener('keydown', function (e) {
+        var v = current();
+        if (!v || v.type !== 'photo') return;
+        if (e.key === 'Escape') { e.preventDefault(); pfClose(); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); pfStep(1); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); pfStep(-1); }
+      });
+
       function setStack(s) {
         stack = s;
         render();
@@ -2143,8 +2190,19 @@
         wasMusic = isMusic;
         stage.classList.toggle('in-music', isMusic);
         hdr.textContent = v ? v.title : 'elena zaghis';
-        if (!v) return;
+        var isPhoto = !!v && v.type === 'photo';
+        pfLayer.hidden = !isPhoto;
+        document.documentElement.style.overflow = isPhoto ? 'hidden' : '';
+        if (!v) { pfSlot.replaceChildren(); return; }
         trackView();
+        if (isPhoto) {
+          pfSlot.replaceChildren(v.el);
+          pfCount.textContent = v.title;
+          screen.replaceChildren(scrollBar);
+          scrollBar.classList.remove('on');
+          return;
+        }
+        pfSlot.replaceChildren();
         screen.replaceChildren(v.el, scrollBar);
         if (v.type === 'list') renderList(v);
         else if (v.type === 'flow') { renderFlow(v); scrollBar.classList.remove('on'); }
