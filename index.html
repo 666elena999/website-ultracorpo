@@ -881,7 +881,11 @@
   .lowbatt[hidden] { display: none; }
   .lowbatt svg { width: 28%; height: auto; }
   html[data-theme="dark"] .lowbatt { background: #111; }
-  html[data-theme="dark"] .lowbatt svg { filter: invert(1); }
+  .lowbatt { color: #111; }
+  html[data-theme="dark"] .lowbatt { color: #e6e6e6; }
+  /* the header battery turns the same pink as the pressed buttons when it runs low */
+  .hdr-icons .batt-fill.low { fill: #ff2f9e; }
+  html[data-theme="dark"] .hdr-icons .batt-fill.low { fill: #00d061; } /* inverted with the icon, shows as the same pink */
 
   /* ---------- MENU signifier: a soft pulse if nobody has touched the ipod yet ---------- */
   @keyframes menuHint { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
@@ -2655,7 +2659,7 @@
       var lowEl = document.getElementById('lowbatt');
       var battFill = document.querySelector('.hdr-icons .batt-fill');
       var asleep = false;
-      lowEl.innerHTML = '<svg viewBox="0 0 22 12" aria-hidden="true"><rect x="0.8" y="1.3" width="18" height="9.4" rx="1.6" fill="none" stroke="#111" stroke-width="1"/><rect x="19.3" y="4.2" width="2" height="3.6" rx="0.6" fill="#111"/><rect x="2.3" y="2.8" width="1.6" height="6.4" rx="0.4" fill="#e0302a"/></svg>';
+      lowEl.innerHTML = '<svg viewBox="0 0 22 12" aria-hidden="true"><rect x="0.8" y="1.3" width="18" height="9.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="19.3" y="4.2" width="2" height="3.6" rx="0.6" fill="currentColor"/><rect x="2.3" y="2.8" width="1.6" height="6.4" rx="0.6" fill="#ff2f9e"/></svg>';
       function wake() {
         if (!asleep) return;
         asleep = false; lowEl.hidden = true; pageStart = Date.now();
@@ -2668,7 +2672,7 @@
         elapsedEl.textContent = formatTime(t);
         remainingEl.textContent = '-' + formatTime(TRACK_LEN - t);
         fillEl.style.width = (t / TRACK_LEN * 100) + '%';
-        if (battFill) battFill.setAttribute('width', (15 * (1 - t / TRACK_LEN)).toFixed(2));
+        if (battFill) { battFill.setAttribute('width', (15 * (1 - t / TRACK_LEN)).toFixed(2)); battFill.classList.toggle('low', t / TRACK_LEN > 0.8); }
         if (t >= TRACK_LEN && !asleep) { asleep = true; lowEl.hidden = false; }
         requestAnimationFrame(tickProgress);
       }
