@@ -905,29 +905,23 @@
     .stage { transition: none; }
   }
 
-  /* ---------- photos open full screen, outside the ipod ---------- */
-  .photo-full {
-    position: fixed; inset: 0; z-index: 50;
-    background: #000; color: #fff;
-    display: flex; flex-direction: column;
-  }
+  /* ---------- photos open full screen, outside the ipod: full bleed, tap for the next one ---------- */
+  .photo-full { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; cursor: pointer; }
   .photo-full[hidden] { display: none; }
-  .pf-bar {
-    flex: none; display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 18px;
-    font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    position: relative; z-index: 2;
+  .pf-slot, .photo-full .photo-view { position: absolute; inset: 0; height: auto; background: #000; }
+  .photo-full .photo-view img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-full .photo-bar { display: none !important; }
+  .pf-close, .pf-cap {
+    position: absolute; z-index: 2;
+    font: 700 14px/1.25 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #fff;
+    mix-blend-mode: difference;
   }
-  .pf-close { all: unset; cursor: pointer; padding: 6px 0; }
-  .pf-close:focus-visible { outline: 2px solid #ff2f9e; outline-offset: 3px; }
-  .pf-count { color: #9a9a9a; font-weight: 400; font-variant-numeric: tabular-nums; }
-  .pf-slot { flex: 1; min-height: 0; padding: 0 0 18px; }
-  .photo-full .photo-view { height: 100%; background: #000; }
-  .photo-full .photo-bar { left: 18px; right: 18px; bottom: 0; height: 3px; }
-  .pf-nav { all: unset; position: absolute; top: 50px; bottom: 30px; width: 30%; cursor: pointer; z-index: 1; }
-  .pf-prev { left: 0; cursor: w-resize; }
-  .pf-next { right: 0; cursor: e-resize; }
-  @media (hover: none) { .pf-nav { display: none; } } /* phones swipe instead */
+  .pf-close { all: unset; position: absolute; z-index: 2; top: 12px; right: 18px; font: 400 30px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; color: #fff; mix-blend-mode: difference; cursor: pointer; padding: 4px; }
+  .pf-close:focus-visible { outline: 2px solid #ff2f9e; }
+  .pf-cap { left: 18px; right: 60px; bottom: 18px; cursor: auto; text-wrap: pretty; }
+  .pf-cap p { margin: 0; }
+  .pf-cap .pf-dim { font-weight: 400; }
 
   /* ---------- dark mode ---------- */
 
@@ -1189,10 +1183,10 @@
   </div>
 
   <div class="photo-full" id="photo-full" hidden>
-    <div class="pf-bar"><button type="button" class="pf-close" id="pf-close">menu</button><span class="pf-count" id="pf-count"></span></div>
     <div class="pf-slot" id="pf-slot"></div>
-    <button type="button" class="pf-nav pf-prev" id="pf-prev" aria-label="previous picture"></button>
-    <button type="button" class="pf-nav pf-next" id="pf-next" aria-label="next picture"></button>
+    <button type="button" class="pf-close" id="pf-close" aria-label="close">&times;</button>
+    <div class="pf-cap" id="pf-cap"></div>
+    <span class="pf-count" id="pf-count" hidden></span>
   </div>
 
   <footer>
@@ -1459,6 +1453,7 @@
       var pfLayer = document.getElementById('photo-full');
       var pfSlot = document.getElementById('pf-slot');
       var pfCount = document.getElementById('pf-count');
+      var pfCap = document.getElementById('pf-cap');
       var scrollBar = screen.querySelector('.screen-scroll');
       var scrollThumb = screen.querySelector('.screen-thumb');
       var aboutEl = document.getElementById('about-view');
@@ -2165,8 +2160,7 @@
       function pfStep(dir) { var v = current(); if (v && v.type === 'photo') { v.setAuto(false); v.show(v.n + dir); } }
       function pfClose() { var v = current(); if (v && v.type === 'photo') { stack.pop(); render(); } }
       document.getElementById('pf-close').addEventListener('click', pfClose);
-      document.getElementById('pf-prev').addEventListener('click', function () { pfStep(-1); });
-      document.getElementById('pf-next').addEventListener('click', function () { pfStep(1); });
+      pfSlot.addEventListener('click', function (e) { e.stopPropagation(); pfStep(1); }, true);
       document.addEventListener('keydown', function (e) {
         var v = current();
         if (!v || v.type !== 'photo') return;
@@ -2197,7 +2191,11 @@
         trackView();
         if (isPhoto) {
           pfSlot.replaceChildren(v.el);
-          pfCount.textContent = v.title;
+          var pp = v.project || {};
+          pfCap.replaceChildren();
+          var t1 = el('p', '', disp(pp.title || '') + (pp.year ? ', ' + disp(pp.year) : ''));
+          pfCap.appendChild(t1);
+          if (pp.role) pfCap.appendChild(el('p', 'pf-dim', disp(pp.role)));
           screen.replaceChildren(scrollBar);
           scrollBar.classList.remove('on');
           return;
