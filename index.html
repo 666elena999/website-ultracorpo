@@ -867,6 +867,8 @@
   /* ---------- typography: no widows or orphans, balanced short titles ---------- */
   .text-view p, .text-view li { text-wrap: pretty; hyphens: manual; }
   .text-view .p-title, .flow-title, .list li { text-wrap: balance; }
+  .text-view .names span { white-space: nowrap; }
+  .text-view .names { text-wrap: pretty; }
 
   /* ---------- battery easter egg ---------- */
   .lowbatt {
@@ -1209,9 +1211,10 @@
         <li>vibes and image research</li>
         <li>cultural production</li>
         <li>installation and object design</li>
+        <li>art direction and graphic design</li>
       </ul>
       <p class="tight">clients and collaborators include:</p>
-      <p>berggruen institute &bull; design museum den bosch &bull; domus academy &bull; impakt &bull; joshua citarella &bull; medialab matadero &bull; mozilla festival &bull; new models studio &bull; nxt museum &bull; palazzo diedo &bull; parasite 2.0 &bull; protein &bull; takt &bull; tba21 &bull; thyssen-bornemisza national museum</p>
+      <p class="names"><span>berggruen&nbsp;institute&nbsp;&bull;</span> <span>design&nbsp;museum&nbsp;den&nbsp;bosch&nbsp;&bull;</span> <span>domus&nbsp;academy&nbsp;&bull;</span> <span>impakt&nbsp;&bull;</span> <span>joshua&nbsp;citarella&nbsp;&bull;</span> <span>medialab&nbsp;matadero&nbsp;&bull;</span> <span>mozilla&nbsp;festival&nbsp;&bull;</span> <span>new&nbsp;models&nbsp;studio&nbsp;&bull;</span> <span>nxt&nbsp;museum&nbsp;&bull;</span> <span>palazzo&nbsp;diedo&nbsp;&bull;</span> <span>parasite&nbsp;2.0&nbsp;&bull;</span> <span>protein&nbsp;&bull;</span> <span>takt&nbsp;&bull;</span> <span>tba21&nbsp;&bull;</span> <span>thyssen-bornemisza&nbsp;national&nbsp;museum</span></p>
     </div>
 
     <div class="np-player" id="np-player"><div id="spotify-embed"></div></div>
@@ -1342,12 +1345,7 @@
         role: "art direction, marketing & content design across social, live content, and print",
         text: "Works [selected]\n- Communication for The Moment afterparty (Berlinale) with Charli XCX\n- Communication + live content and interviews for takt x Bleach Berlin hosted by Dorian Electra, photo by Luca Piscopo\n- Interview format previously featuring christ dillinger, miss bashful, 8485, and more\n\ntakt is one of europe’s leading underground event and community platforms, operating at the intersection of experimental pop, nightlife, and subculture.",
         link: "https://www.instagram.com/jointakt/",
-        embed: [
-          "https://www.instagram.com/p/DYxEqO0iBYV/embed",
-          "https://www.instagram.com/p/DdturfBo6aV/embed",
-          "https://www.instagram.com/p/DbdiamPDTZ-/embed"
-        ],
-        embedLink: "@jointakt",
+        linkText: "@jointakt",
         images: { dir: "takt", pics: [15], cover: true }
       },
       {
@@ -1405,9 +1403,9 @@
     ];
 
     var WRITING = [
-      { year: "2026", title: "Do Not Research 2026", link: "https://donotresearch.substack.com/p/vibe" },
-      { year: "2025", title: "Current Obsession—From the Middle Ages to Viral Memes of Locktober", link: "https://current-obsession.com/from-middle-ages-to-viral-memes-of-locktober/" },
-      { year: "2025", title: "The Jungle—From the Middle Ages to Viral Memes of Locktober", link: "https://studiosaudari.bigcartel.com/product/jungle" }
+      { year: "2026", title: "V.I.B.E. (Viral Ideology Broadcast Experiment)—Do Not Research", text: "with machine of loving grace.\n\n“contemporary political influence announces itself as spiritual warfare wrapped in kawaii aesthetics.”", link: "https://donotresearch.substack.com/p/vibe" },
+      { year: "2025", title: "Ideography & Ideograms: From the Middle Ages to Viral Memes of Locktober—Current Obsession", text: "with miguel garchitorena. a history of the chastity belt, from its satirical origins to its use in online manosphere communities.", link: "https://current-obsession.com/from-middle-ages-to-viral-memes-of-locktober/" },
+      { year: "2025", title: "From the Middle Ages to Viral Memes of Locktober—The Jungle", text: "printed in the jungle, a 2025 self-published zine by studio saudari, limited to 150 copies.", link: "https://studiosaudari.bigcartel.com/product/jungle" }
     ];
 
     var PRESS = [
@@ -1625,7 +1623,7 @@
       }
 
       function haptic() {
-        try { if (navigator.vibrate) navigator.vibrate(3); } catch (e) {}
+        try { if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) navigator.vibrate(3); } catch (e) {}
       }
 
       function openLink(href) {
@@ -1711,7 +1709,7 @@
         if (p.embed) {
           if (p.link) {
             var ep = el('p');
-            var ea = el('a', '', (p.embedLink || hostOf(p.link)) + ' \u2197');
+            var ea = el('a', '', (p.embedLink || siteName(p.link)) + ' \u2197');
             ea.href = p.link;
             ea.target = '_blank';
             ea.rel = 'noopener';
@@ -1758,7 +1756,7 @@
         }
         if (p.link && hasImages(p) && !p.embed) {
           var lp = el('p');
-          var a = el('a', '', (p.linkText || hostOf(p.link)) + ' \u2197');
+          var a = el('a', '', (p.linkText || siteName(p.link)) + ' \u2197');
           a.href = p.link;
           a.target = '_blank';
           a.rel = 'noopener';
@@ -1767,7 +1765,7 @@
         }
         if (p.embed) d.appendChild(el('p', 'p-play', '\u25B6 press play'));
         else if (hasImages(p)) d.appendChild(el('p', 'p-play', '\u25B6 slideshow'));
-        else if (p.link) d.appendChild(el('p', 'p-play', '\u25B6 press play'));
+        else if (p.link) d.appendChild(el('p', 'p-play', '\u25B6 ' + siteName(p.link) + ' \u2197'));
         return { type: 'text', title: listTitle, el: d, list: list, idx: idx, link: p.link, project: p };
       }
 
@@ -1781,6 +1779,23 @@
         return IMAGE_ROOT + p.images.dir + '/' + (small ? 't/' : '') + (k < 10 ? '0' : '') + k + '.jpg';
       }
 
+      var SITE_NAMES = {
+        'donotresearch.substack.com': 'do not research', 'studiosaudari.bigcartel.com': 'studio saudari',
+        'joshuacitarella.substack.com': 'joshua citarella', 'networkcultures.org': 'institute of network cultures',
+        'ddw.nl': 'dutch design week', 'ars.electronica.art': 'ars electronica', 'kubaparis.com': 'kuba paris',
+        'mozillafestival.org': 'mozilla festival', 'cpdpconferences.org': 'cpdp', 'worm.org': 'worm',
+        'base.milano.it': 'base milano', 'theblendergallery.com': 'the blender gallery', 'vorspiel.berlin': 'vorspiel',
+        'okay-space.com': 'okay space', 'museothyssen.org': 'museo thyssen', 'medialab-matadero.es': 'medialab matadero',
+        'softer.global': 'softer', 'dieangewandte.at': 'die angewandte', 'current-obsession.com': 'current obsession',
+        'elledecor.com': 'elle decor', 'archisearch.gr': 'archisearch', 'dezeen.com': 'dezeen', 'roomdiseno.com': 'room diseño',
+        'amarte.nl': 'amarte', 'cultuureindhoven.nl': 'cultuur eindhoven', 'impakt.nl': 'impakt', 'nxtmuseum.com': 'nxt museum',
+        'designacademy.nl': 'design academy eindhoven', 'transartists.org': 'transartists', 'designboom.com': 'designboom',
+        'instagram.com': 'instagram'
+      };
+      function siteName(href) {
+        var h = hostOf(href);
+        return SITE_NAMES[h] || h.replace(/\.[a-z]+$/, '').replace(/[.-]/g, ' ');
+      }
       function hostOf(href) {
         try { return new URL(href).hostname.replace(/^www\./, ''); } catch (e) { return href; }
       }
