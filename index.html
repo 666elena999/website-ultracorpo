@@ -14,6 +14,10 @@
 <title>elena zaghis | ultracorpo</title>
 <meta name="description" content="elena zaghis (ultracorpo), speculative designer, art director and cultural consultant based in eindhoven. art, commissions, exhibitions, talks and writing." />
 <meta name="author" content="Elena Zaghis" />
+<link rel="icon" href="/favicon.ico" sizes="48x48" />
+<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="/images/favicon-192.png" />
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png" />
 <link rel="canonical" href="https://ultra-corpo.com/" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="ultracorpo" />
@@ -1525,7 +1529,8 @@
           setTimeout(ready, 2500); // never wait longer than this on a slow connection
           for (var i = -PF_PAD + 1; i <= count + PF_PAD; i++) {
             var k = ((i - 1) % count + count) % count + 1;
-            var im = el('img'); im.alt = disp(p.title); im.src = imgSrc(p, k, false); im.draggable = false;
+            var im = el('img'); im.alt = photoAlt(p, k); im.src = imgSrc(p, k, false); im.draggable = false;
+            if (i !== k) im.setAttribute('aria-hidden', 'true'); // the looping copies are read only once
             pending++;
             var done = function () {
               if (--pending === 0) ready();
@@ -1741,7 +1746,7 @@
             (function (n) {
               var im = el('img');
               im.loading = 'lazy';
-              im.alt = '';
+              im.alt = photoAlt(p, n);
               im.src = imgSrc(p, n, true);
               im.addEventListener('click', function () { push(photoView(p, n, false)); });
               grid.appendChild(im);
@@ -1785,6 +1790,13 @@
       }
 
       // n counts from 1 through the project's chosen pictures
+      function photoAlt(p, n) {
+        var parts = [disp(p.title)];
+        if (p.sub) parts.push(disp(p.sub));
+        if (p.year) parts.push(disp(p.year));
+        if (p.where && p.where[0]) parts.push(disp(p.where[0]));
+        return parts.join(', ') + '. photo ' + n + ' of ' + p.images.pics.length;
+      }
       function imgSrc(p, n, small) {
         var k = p.images.pics[n - 1];
         return IMAGE_ROOT + p.images.dir + '/' + (small ? 't/' : '') + (k < 10 ? '0' : '') + k + '.jpg';
