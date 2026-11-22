@@ -479,7 +479,7 @@
     align-items: center;
     height: 3.35cqw;
     padding: 0 2.4cqw 0 0.9cqw;
-    font-size: max(11px, 2cqw);
+    font-size: max(9px, 1.7cqw);
     font-weight: 600;
     color: #111;
     cursor: pointer;
@@ -2197,7 +2197,7 @@
       /* ---------- what each control does ---------- */
 
       function lineStep() {
-        return stage.clientWidth * 0.016 * 1.42;
+        return Math.max(11, stage.clientWidth * 0.0195) * 1.42; // one line of the text view
       }
 
       // one click of the wheel. dir 1 = clockwise = down
@@ -2220,7 +2220,7 @@
           v.setAuto(false);
           v.show(v.n + dir);
         } else {
-          v.el.scrollTop += dir * lineStep() * (1 + Math.min(3, speed / 6));
+          v.el.scrollTop += dir * lineStep() * (1 + Math.min(1, speed / 12));
         }
       }
 
@@ -2470,7 +2470,7 @@
 
       var NORMAL_SPEED = 40;   // px/sec
       var FAST_SPEED = 170;    // px/sec, held next/prev
-      var SCROLL_SPEED = 240;  // px/sec, held next/prev on a text screen
+      var SCROLL_LINES = 8;    // lines/sec, held next/prev on a text screen (same feel at any size)
       var spanWidth = 0;
       var position = 0;
       var paused = false;
@@ -2493,7 +2493,7 @@
         var speed;
         if (v) {
           speed = paused ? 0 : NORMAL_SPEED;
-          if (heldDir !== 0 && v.type === 'text') v.el.scrollTop += heldDir * SCROLL_SPEED * dt;
+          if (heldDir !== 0 && v.type === 'text') v.el.scrollTop += heldDir * SCROLL_LINES * lineStep() * dt;
           if (heldDir !== 0 && v.type === 'music') v.hold(heldDir, dt);
         } else {
           speed = heldDir !== 0 ? heldDir * FAST_SPEED : (paused ? 0 : NORMAL_SPEED);
