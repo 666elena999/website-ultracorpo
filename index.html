@@ -888,6 +888,12 @@
   .earbuds { display: none; }
   .stage-wrap { display: contents; }
 
+  /* ---------- mobile: same composition, zoomed in. the ipod fills most of the width, the heart bleeds off the left edge ---------- */
+  @media (max-width: 600px) and (orientation: portrait) {
+    body { justify-content: flex-start; padding-left: 0; padding-right: 0; }
+    .stage { width: 145vw; margin-left: -43.6vw; }
+  }
+
   /* ---------- dark mode ---------- */
 
   /* light / dark switch: a pill with a sliding knob, label centred in the free side */
