@@ -1515,11 +1515,26 @@
         if (pfStripFor !== p) {
           // the strip loops: copies of the last photos sit before the first, copies of the first after the last
           pfStripEl = el('div', 'pf-strip');
+          pfStripEl.style.opacity = '0';
           pfStripEl.addEventListener('transitionend', pfSnap);
+          var pending = 0, strip = pfStripEl;
+          var ready = function () {
+            if (strip !== pfStripEl || strip.style.opacity === '1') return;
+            var c = current();
+            if (c && c.type === 'photo') pfMove(c.n - 1 + PF_PAD, true);
+            strip.style.opacity = '1';
+          };
+          setTimeout(ready, 2500); // never wait longer than this on a slow connection
           for (var i = -PF_PAD + 1; i <= count + PF_PAD; i++) {
             var k = ((i - 1) % count + count) % count + 1;
             var im = el('img'); im.alt = disp(p.title); im.src = imgSrc(p, k, false); im.draggable = false;
-            im.addEventListener('load', function () { if (pfStripEl && pfStripEl.dataset.slot && !pfMoving) pfMove(+pfStripEl.dataset.slot, true); });
+            pending++;
+            var done = function () {
+              if (--pending === 0) ready();
+              else if (strip.style.opacity === '1' && !pfMoving && strip.dataset.slot) pfMove(+strip.dataset.slot, true);
+            };
+            im.addEventListener('load', done);
+            im.addEventListener('error', done);
             pfStripEl.appendChild(im);
           }
           pfStripFor = p;
@@ -1534,7 +1549,11 @@
         if (instant) pfStripEl.style.transition = 'none';
         pfStripEl.style.transform = 'translateX(' + (innerWidth / 2 - (cur.offsetLeft + cur.offsetWidth / 2)) + 'px)';
         if (instant) { void pfStripEl.offsetWidth; pfStripEl.style.transition = ''; }
-        else pfMoving = true;
+        else {
+          pfMoving = true;
+          clearTimeout(pfMove.t);
+          pfMove.t = setTimeout(function () { pfSnap(); }, 600);
+        }
         pfStripEl.dataset.slot = slot;
       }
       function pfReal(slot, count) { return ((slot - PF_PAD) % count + count) % count + PF_PAD; }
@@ -1550,6 +1569,7 @@
       }
       function pfSnap(e) {
         if (e && e.target !== pfStripEl) return;
+        clearTimeout(pfMove.t);
         pfMoving = false;
         var v = current();
         if (!v || v.type !== 'photo') return;
