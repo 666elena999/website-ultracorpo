@@ -2515,6 +2515,10 @@
       document.addEventListener('keydown', function (e) {
         if (e.metaKey || e.ctrlKey || e.altKey) return;
         var tag = (e.target.tagName || '').toLowerCase();
+        // inside the menus Enter always chooses the highlighted item, even when keyboard focus sits on another wheel button
+        if (e.key === 'Enter' && current() && e.target.classList && e.target.classList.contains('hotspot') && e.target.dataset.region !== 'center') {
+          e.preventDefault(); press('center'); return;
+        }
         if (tag === 'button' && (e.key === 'Enter' || e.key === ' ')) return; // the button handles it
         switch (e.key) {
           case 'ArrowDown': tick(1, 0); break;
