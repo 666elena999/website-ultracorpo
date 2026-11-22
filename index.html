@@ -885,24 +885,8 @@
   .stage.hint .menu-lbl { animation: menuHint 1.4s ease-in-out 3; }
   @media (prefers-reduced-motion: reduce) { .stage.hint .menu-lbl { animation: none; } }
 
-  /* ---------- mobile: earbuds stacked above, ipod near full width ---------- */
   .earbuds { display: none; }
   .stage-wrap { display: contents; }
-  @media (max-width: 600px) {
-    body { flex-direction: column; justify-content: flex-start; padding: 16px 0 90px; overflow-y: auto; }
-    .earbuds {
-      display: block;
-      width: 40vw; height: 33vw; flex: none;
-      background-repeat: no-repeat;
-      background-size: 98vw 98vw;
-      background-position: -2.9vw -1vw;
-      margin-bottom: 0;
-    }
-    html[data-theme="dark"] .earbuds { filter: invert(1); }
-    .stage-wrap { display: block; width: 92vw; height: 138vw; overflow: hidden; overflow: clip; flex: none; position: relative; }
-    .stage { width: 190.5vw; position: absolute; left: -91.4vw; top: -29.1vw; }
-    footer { position: static; margin-top: 18px; }
-  }
 
   /* ---------- dark mode ---------- */
 
