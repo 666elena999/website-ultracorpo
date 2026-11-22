@@ -1575,6 +1575,17 @@
         if (pfReal(cur, count) !== cur) pfMove(pfReal(cur, count), true);
       }
       addEventListener('resize', function () { var v = current(); if (v && v.type === 'photo') pfCentre(v, true); });
+      // mouse wheel and trackpad: one photo per gesture
+      (function () {
+        var acc = 0, lock = 0;
+        pfLayer.addEventListener('wheel', function (e) {
+          e.preventDefault();
+          var now = Date.now();
+          if (now < lock) return;
+          acc += Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          if (Math.abs(acc) > 40) { pfStep(acc > 0 ? 1 : -1); acc = 0; lock = now + 450; }
+        }, { passive: false });
+      })();
       // swipe on phones
       (function () {
         var x0 = null;
@@ -1950,6 +1961,7 @@
             return {
               label: p.title,
               year: years ? p.year : '',
+              entry: p,
               open: function () { return projectView(list, i, title); }
             };
           }));
@@ -2448,11 +2460,12 @@
         }
 
         if (region === 'center') {
-          if (!v) paused = !paused;
+          if (!v) { setStack([rootView()]); return; }
           else if (v.type === 'music') v.center();
           else if (v.type === 'list') activate(v.items[v.sel]);
           else if (v.type === 'flow') openFromFlow(v);
           else if (v.type === 'photo') v.setAuto(!v.auto);
+          else if (hasImages(v.project) && !v.project.embed) push(photoView(v.project, 1, false));
           else v.el.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -2462,6 +2475,11 @@
           if (v && v.type === 'music') v.toggle();
           else if (!v) paused = !paused;
           else if (v.type === 'photo') v.setAuto(!v.auto);
+          else if (v.type === 'list') {
+            var it = v.items[v.sel];
+            if (it && it.href) openLink(it.href);
+            else if (it && it.entry && it.entry.link) openLink(it.entry.link);
+          }
           else if (v.type === 'flow') {
             var fp = v.list[v.sel];
             if (fp.embed) openFromFlow(v);
