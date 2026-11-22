@@ -934,6 +934,10 @@
   /* filmstrip: the current photo centred at full height, the previous and next ones visible at the sides */
   .pf-strip { position: absolute; top: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 0; will-change: transform; transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.3, 1); }
   .pf-strip img { flex: none; height: 100%; width: auto; max-width: 100vw; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+  /* phones: every photo in the strip gets the same height, so the row reads as one band */
+  @media (max-width: 600px) and (orientation: portrait) {
+    .pf-strip img { height: min(100svh - 140px, 125vw); max-width: none; }
+  }
   .pf-arrow {
     all: unset; position: absolute; top: 50%; z-index: 2; transform: translateY(-50%);
     padding: 18px 16px; cursor: pointer;
